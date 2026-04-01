@@ -1,0 +1,88 @@
+name: Water Usage Alerts
+
+on:
+  schedule:
+    # Daily digest: 6:00 AM Mountain Time = 12:00 UTC (adjust for daylight saving)
+    - cron: "0 12 * * *"
+    # Spike check: every 15 minutes
+    - cron: "*/15 * * * *"
+  # Allow manual trigger from GitHub Actions tab
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Mode: daily, spike, or test"
+        required: true
+        default: "test"
+
+jobs:
+  run-alerts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write config from secrets
+        run: |
+          cat > config.yaml << 'EOF'
+          bluebot:
+            api_key: "${{ secrets.BLUEBOT_API_KEY }}"
+            base_url: "https://api.bluebot.com/v1"
+            phases:
+              - id: "${{ secrets.PHASE_1_ID }}"
+                name: "Phase 1"
+                unit_count: 40
+          email:
+            sender: "${{ secrets.GMAIL_ADDRESS }}"
+            app_password: "${{ secrets.GMAIL_APP_PASSWORD }}"
+            smtp_server: "smtp.gmail.com"
+            smtp_port: 587
+            always_notify:
+              - "${{ secrets.BOARD_EMAIL_1 }}"
+              - "${{ secrets.BOARD_EMAIL_2 }}"
+              - "${{ secrets.BOARD_EMAIL_3 }}"
+          sms:
+            account_sid: "${{ secrets.TWILIO_ACCOUNT_SID }}"
+            auth_token: "${{ secrets.TWILIO_AUTH_TOKEN }}"
+            from_number: "${{ secrets.TWILIO_FROM_NUMBER }}"
+          thresholds:
+            spike_daily_pct: 1.30
+            spike_hourly_pct: 1.50
+            persistent_hours: 2
+            quiet_hours_start: 22
+            quiet_hours_end: 6
+          property:
+            name: "The Foundry at Washington Park"
+            timezone: "America/Denver"
+          EOF
+
+      - name: Write resident email list from secret
+        run: echo "${{ secrets.RESIDENTS_EMAIL_CSV }}" > residents_email.csv
+
+      - name: Write resident SMS list from secret
+        run: echo "${{ secrets.RESIDENTS_SMS_CSV }}" > residents_sms.csv
+
+      # Determine mode: manual dispatch overrides schedule
+      - name: Run daily digest (6 AM UTC 12)
+        if: >
+          (github.event_name == 'schedule' && github.event.schedule == '0 12 * * *') ||
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'daily')
+        run: python main.py --mode daily
+
+      - name: Run spike check (every 15 min)
+        if: >
+          (github.event_name == 'schedule' && github.event.schedule == '*/15 * * * *') ||
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'spike')
+        run: python main.py --mode spike
+
+      - name: Run test
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'test'
+        run: python main.py --mode test
