@@ -1,6 +1,11 @@
 """
 fetch_data.py
-Pulls usage data from the BlueBot API.
+Pulls usage data from the BlueBot Flow API v2.
+
+API base: https://prod.bluebot.com/flow/v2
+Auth:     bluebot-api-key: <VALUE_AFTER_DOT>
+Params:   range_start / range_end as Unix timestamps (seconds)
+Meter serial is passed as a path segment, not a query param.
 """
 
 import requests
@@ -19,15 +24,22 @@ def load_config(path="config.yaml"):
 
 def get_headers(config):
     return {
-        "Authorization": f"Bearer {config['bluebot']['api_key']}",
+        "bluebot-api-key": config["bluebot"]["api_key"],
         "Content-Type": "application/json",
     }
 
 
+def _to_unix(dt):
+    """Convert a timezone-aware datetime to a Unix timestamp (seconds)."""
+    return int(dt.timestamp())
+
+
 def get_yesterday_usage(config):
     """
-    Fetch yesterday's total usage per phase.
-    Returns: dict of { phase_id: { 'name': ..., 'gallons': ..., 'unit_count': ... } }
+    Fetch yesterday's total daily usage per phase.
+    Uses /total/daily-tz/{meter_serial} so day boundaries respect the
+    meter's local timezone.
+    Returns: dict of { phase_id: { 'name', 'gallons', 'unit_count', 'date' } }
     """
     tz = pytz.timezone(config["property"]["timezone"])
     now = datetime.now(tz)
@@ -39,20 +51,20 @@ def get_yesterday_usage(config):
     base_url = config["bluebot"]["base_url"]
 
     for phase in config["bluebot"]["phases"]:
+        meter = phase["id"]
         try:
-            url = f"{base_url}/usage/historical"
+            url = f"{base_url}/total/daily-tz/{meter}"
             params = {
-                "device_id": phase["id"],
-                "start": start.isoformat(),
-                "end": end.isoformat(),
-                "interval": "day",
+                "range_start": _to_unix(start),
+                "range_end": _to_unix(end),
             }
             resp = requests.get(url, headers=get_headers(config), params=params, timeout=15)
             resp.raise_for_status()
             data = resp.json()
 
-            # Adapt this key based on actual BlueBot response shape
-            gallons = data.get("total_gallons") or data.get("usage") or 0
+            # BlueBot returns a list of { timestamp, value/gallons } records
+            readings = data if isinstance(data, list) else (data.get("data") or data.get("readings") or [])
+            gallons = sum(r.get("gallons") or r.get("value") or 0 for r in readings)
 
             results[phase["id"]] = {
                 "name": phase["name"],
@@ -60,7 +72,7 @@ def get_yesterday_usage(config):
                 "unit_count": phase["unit_count"],
                 "date": yesterday.strftime("%Y-%m-%d"),
             }
-            logger.info(f"Fetched yesterday: Phase {phase['name']} = {gallons} gal")
+            logger.info(f"Fetched yesterday: Phase {phase['name']} = {gallons:.0f} gal")
         except Exception as e:
             logger.error(f"Failed to fetch yesterday for phase {phase['name']}: {e}")
             results[phase["id"]] = {
@@ -76,8 +88,9 @@ def get_yesterday_usage(config):
 
 def get_recent_hourly(config, hours=4):
     """
-    Fetch the last N hours of usage for spike detection.
-    Returns: dict of { phase_id: [ { 'timestamp': ..., 'gallons': ... }, ... ] }
+    Fetch the last N hours of hourly usage for spike detection.
+    Uses /total/hourly/{meter_serial}.
+    Returns: dict of { phase_id: { 'name', 'readings': [...] } }
     """
     tz = pytz.timezone(config["property"]["timezone"])
     now = datetime.now(tz)
@@ -87,24 +100,23 @@ def get_recent_hourly(config, hours=4):
     base_url = config["bluebot"]["base_url"]
 
     for phase in config["bluebot"]["phases"]:
+        meter = phase["id"]
         try:
-            url = f"{base_url}/usage/historical"
+            url = f"{base_url}/total/hourly/{meter}"
             params = {
-                "device_id": phase["id"],
-                "start": start.isoformat(),
-                "end": now.isoformat(),
-                "interval": "hour",
+                "range_start": _to_unix(start),
+                "range_end": _to_unix(now),
             }
             resp = requests.get(url, headers=get_headers(config), params=params, timeout=15)
             resp.raise_for_status()
             data = resp.json()
 
-            # Adapt based on actual BlueBot response — usually a list of { timestamp, value }
-            readings = data.get("readings") or data.get("data") or []
+            readings = data if isinstance(data, list) else (data.get("data") or data.get("readings") or [])
             results[phase["id"]] = {
                 "name": phase["name"],
                 "readings": readings,
             }
+            logger.info(f"Fetched hourly: Phase {phase['name']} = {len(readings)} records")
         except Exception as e:
             logger.error(f"Failed to fetch hourly for phase {phase['name']}: {e}")
             results[phase["id"]] = {"name": phase["name"], "readings": [], "error": str(e)}
@@ -115,7 +127,8 @@ def get_recent_hourly(config, hours=4):
 def get_30day_baseline(config):
     """
     Fetch 30 days of daily totals to compute a rolling average per phase.
-    Returns: dict of { phase_id: { 'avg_daily_gallons': float, 'avg_hourly_gallons': float } }
+    Uses /total/daily/{meter_serial}.
+    Returns: dict of { phase_id: { 'avg_daily_gallons', 'avg_hourly_gallons' } }
     """
     tz = pytz.timezone(config["property"]["timezone"])
     now = datetime.now(tz)
@@ -125,19 +138,18 @@ def get_30day_baseline(config):
     base_url = config["bluebot"]["base_url"]
 
     for phase in config["bluebot"]["phases"]:
+        meter = phase["id"]
         try:
-            url = f"{base_url}/usage/historical"
+            url = f"{base_url}/total/daily/{meter}"
             params = {
-                "device_id": phase["id"],
-                "start": start.isoformat(),
-                "end": now.isoformat(),
-                "interval": "day",
+                "range_start": _to_unix(start),
+                "range_end": _to_unix(now),
             }
             resp = requests.get(url, headers=get_headers(config), params=params, timeout=15)
             resp.raise_for_status()
             data = resp.json()
 
-            readings = data.get("readings") or data.get("data") or []
+            readings = data if isinstance(data, list) else (data.get("data") or data.get("readings") or [])
             if readings:
                 values = [r.get("gallons") or r.get("value") or 0 for r in readings]
                 avg_daily = sum(values) / len(values)

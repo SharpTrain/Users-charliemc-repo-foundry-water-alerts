@@ -2,11 +2,11 @@ name: Water Usage Alerts
 
 on:
   schedule:
-    # Daily digest: 6:00 AM Mountain Time = 12:00 UTC (adjust for daylight saving)
-    - cron: "0 12 * * *"
+    # Daily digest: 5 AM Eastern Standard Time = 10:00 UTC (6 AM in EDT/summer)
+    - cron: "0 10 * * *"
     # Spike check: every 15 minutes
     - cron: "*/15 * * * *"
-  # Allow manual trigger from GitHub Actions tab
+  # Manual trigger from GitHub Actions tab
   workflow_dispatch:
     inputs:
       mode:
@@ -33,47 +33,57 @@ jobs:
       - name: Write config from secrets
         run: |
           cat > config.yaml << 'EOF'
+          property:
+            name: "The Foundry at Washington Park"
+            timezone: "America/New_York"
+
           bluebot:
             api_key: "${{ secrets.BLUEBOT_API_KEY }}"
-            base_url: "https://api.bluebot.com/v1"
+            base_url: "https://prod.bluebot.com/flow/v2"
             phases:
-              - id: "${{ secrets.PHASE_1_ID }}"
+              - id: "BB8100016943"
                 name: "Phase 1"
-                unit_count: 40
+                unit_count: 27
+              - id: "BB8100014332"
+                name: "Phase 2"
+                unit_count: 34
+
           email:
-            sender: "${{ secrets.GMAIL_ADDRESS }}"
+            sender: "foundrywater@gmail.com"
             app_password: "${{ secrets.GMAIL_APP_PASSWORD }}"
             smtp_server: "smtp.gmail.com"
             smtp_port: 587
             always_notify:
-              - "${{ secrets.BOARD_EMAIL_1 }}"
-              - "${{ secrets.BOARD_EMAIL_2 }}"
-              - "${{ secrets.BOARD_EMAIL_3 }}"
+              - "foundrynewburgh@gmail.com"
+              - "foundrytreasurer@gmail.com"
+              - "marthacwhite@gmail.com"
+              - "andrew@atticlabs.info"
+              - "kevinfrancisbyrnes@gmail.com"
+              - "zap6237@aol.com"
+              - "charlie@source-savvy.com"
+
           sms:
             account_sid: "${{ secrets.TWILIO_ACCOUNT_SID }}"
             auth_token: "${{ secrets.TWILIO_AUTH_TOKEN }}"
-            from_number: "${{ secrets.TWILIO_FROM_NUMBER }}"
+            from_number: "+18338963879"
+
           thresholds:
             spike_daily_pct: 1.30
-            spike_hourly_pct: 1.50
-            persistent_hours: 2
+            spike_hourly_pct: 1.30
+            persistent_hours: 3
             quiet_hours_start: 22
             quiet_hours_end: 6
-          property:
-            name: "The Foundry at Washington Park"
-            timezone: "America/Denver"
           EOF
 
-      - name: Write resident email list from secret
+      - name: Write resident email list
         run: echo "${{ secrets.RESIDENTS_EMAIL_CSV }}" > residents_email.csv
 
-      - name: Write resident SMS list from secret
+      - name: Write resident SMS list
         run: echo "${{ secrets.RESIDENTS_SMS_CSV }}" > residents_sms.csv
 
-      # Determine mode: manual dispatch overrides schedule
-      - name: Run daily digest (6 AM UTC 12)
+      - name: Run daily digest (5 AM Eastern)
         if: >
-          (github.event_name == 'schedule' && github.event.schedule == '0 12 * * *') ||
+          (github.event_name == 'schedule' && github.event.schedule == '0 10 * * *') ||
           (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'daily')
         run: python main.py --mode daily
 
