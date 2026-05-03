@@ -3,18 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SMS Opt-In — The Foundry at Washington Park</title>
+  <title>SMS Opt-In — Foundry at Washington Park Water Alerts</title>
   <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
     body {
       font-family: Arial, sans-serif;
-      max-width: 680px;
+      max-width: 620px;
       margin: 48px auto;
       padding: 0 24px;
       color: #222;
       line-height: 1.6;
+      background: #fff;
     }
-    h1 { font-size: 1.4rem; margin-bottom: 4px; }
-    h2 { font-size: 1.05rem; margin-top: 32px; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+
+    h1 { font-size: 1.4rem; margin: 0 0 4px; }
+
     .tag {
       display: inline-block;
       background: #1a73e8;
@@ -22,17 +26,132 @@
       font-size: 0.75rem;
       padding: 2px 8px;
       border-radius: 4px;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
-    ul { padding-left: 20px; }
+
+    p { margin: 0 0 14px; }
+
+    /* ---- Form ---- */
+    .form-card {
+      background: #f8f9fb;
+      border: 1px solid #dde2ea;
+      border-radius: 8px;
+      padding: 28px 28px 24px;
+      margin: 28px 0;
+    }
+
+    .form-card h2 {
+      font-size: 1.05rem;
+      margin: 0 0 18px;
+      color: #1a73e8;
+    }
+
+    .field { margin-bottom: 16px; }
+
+    .field label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #333;
+    }
+
+    .field label .optional {
+      font-weight: normal;
+      color: #888;
+    }
+
+    .field input[type="text"],
+    .field input[type="tel"],
+    .field select {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 0.95rem;
+      background: #fff;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      outline: 2px solid #1a73e8;
+      outline-offset: 1px;
+      border-color: #1a73e8;
+    }
+
+    /* ---- Consent block ---- */
+    .consent-block {
+      background: #fff;
+      border: 1px solid #dde2ea;
+      border-radius: 6px;
+      padding: 14px 16px;
+      margin: 20px 0 22px;
+    }
+
+    .consent-label {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      cursor: pointer;
+      font-size: 0.875rem;
+      line-height: 1.55;
+      color: #333;
+    }
+
+    .consent-label input[type="checkbox"] {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      accent-color: #1a73e8;
+      cursor: pointer;
+    }
+
+    /* ---- Submit button ---- */
+    button[type="submit"] {
+      display: block;
+      width: 100%;
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    button[type="submit"]:hover { background: #1558b0; }
+
+    /* ---- Info sections ---- */
+    h2.section {
+      font-size: 1rem;
+      margin: 36px 0 8px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 6px;
+    }
+
+    ul { padding-left: 20px; margin: 0 0 14px; }
     li { margin-bottom: 6px; }
+
+    .sample-msg {
+      background: #f0f4ff;
+      border-left: 4px solid #1a73e8;
+      padding: 10px 14px;
+      margin: 8px 0;
+      font-size: 0.9rem;
+      border-radius: 0 5px 5px 0;
+    }
+
     .notice {
       background: #f5f5f5;
-      border-left: 4px solid #1a73e8;
-      padding: 12px 16px;
-      margin: 24px 0;
-      font-size: 0.95rem;
+      border-left: 4px solid #ccc;
+      padding: 10px 14px;
+      font-size: 0.88rem;
+      margin: 14px 0;
     }
+
     footer {
       margin-top: 48px;
       font-size: 0.8rem;
@@ -45,67 +164,121 @@
 <body>
 
   <h1>Water Alert SMS Program</h1>
-  <div class="tag">The Foundry at Washington Park — Newburgh, NY</div>
+  <div class="tag">The Foundry at Washington Park &mdash; Newburgh, NY</div>
 
   <p>
-    The Foundry at Washington Park Condominium Association operates an automated
-    water usage monitoring system (BlueBot) that detects abnormal water consumption
-    that may indicate leaks or plumbing issues. This page describes how residents
-    opt in to receive SMS alerts from this system.
+    The Foundry at Washington Park Condominium Association monitors building-wide water
+    usage via BlueBot and sends automated SMS alerts when abnormal consumption is
+    detected — helping residents catch leaks early. Use the form below to request alerts.
   </p>
 
-  <h2>How Residents Opt In</h2>
-  <p>
-    Opt-in is collected <strong>offline</strong> through a written consent process
-    managed by the condo board of directors:
-  </p>
-  <ul>
-    <li>Residents are informed of the SMS alert program via board communications, building notices, or at annual meetings.</li>
-    <li>Residents who wish to receive alerts provide their mobile phone number to the board in writing — either via a paper consent form or by email to the board address (<a href="mailto:foundrynewburgh@gmail.com">foundrynewburgh@gmail.com</a>).</li>
-    <li>Consent forms and email records are retained by the board of directors.</li>
-    <li>No resident is added to the SMS list without their explicit written request.</li>
-  </ul>
+  <!-- ========== OPT-IN FORM ========== -->
+  <div class="form-card">
+    <h2>Request Water Alert SMS</h2>
 
-  <h2>What Messages Are Sent</h2>
-  <ul>
-    <li>Automated water spike alerts when usage exceeds 30% above normal levels for a phase of the building.</li>
-    <li>Persistent spike follow-up alerts if elevated usage continues for 3 or more consecutive hours.</li>
-    <li>Messages are sent only when a spike event is detected — this is not a marketing or promotional program.</li>
-    <li>Typical frequency: 0–3 messages per week, depending on building conditions.</li>
-  </ul>
+    <form action="https://formsubmit.co/foundrynewburgh@gmail.com" method="POST">
+
+      <!-- Formsubmit config -->
+      <input type="hidden" name="_subject" value="New SMS Opt-In — Foundry Water Alerts">
+      <input type="hidden" name="_captcha" value="false">
+      <input type="hidden" name="_next" value="https://sharptrain.github.io/Users-charliemc-repo-foundry-water-alerts/thank-you.html">
+      <input type="hidden" name="_template" value="table">
+
+      <div class="field">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" name="name" required placeholder="First Last" autocomplete="name">
+      </div>
+
+      <div class="field">
+        <label for="phone">Mobile Phone Number</label>
+        <input type="tel" id="phone" name="phone" required placeholder="(555) 555-5555" autocomplete="tel">
+      </div>
+
+      <div class="field">
+        <label for="unit">Unit Number <span class="optional">(optional)</span></label>
+        <input type="text" id="unit" name="unit" placeholder="e.g. 4B">
+      </div>
+
+      <div class="field">
+        <label for="phase">Building Phase</label>
+        <select id="phase" name="phase" required>
+          <option value="">Select your phase...</option>
+          <option value="Phase 1">Phase 1</option>
+          <option value="Phase 2">Phase 2</option>
+          <option value="Not sure">Not sure</option>
+        </select>
+      </div>
+
+      <!-- CTIA-compliant consent checkbox — must remain unchecked by default -->
+      <div class="consent-block">
+        <label class="consent-label">
+          <input type="checkbox" name="consent" value="yes" required>
+          <span>
+            By checking this box, I agree to receive recurring automated water usage
+            alert text messages from <strong>The Foundry at Washington Park
+            Condominium Association</strong> sent from <strong>+1&nbsp;(833)&nbsp;896-3879</strong>
+            to the mobile number I provided above. These are utility safety alerts only
+            &mdash; not marketing messages. Message frequency varies (typically
+            0&ndash;3 messages per week). <strong>Message and data rates may apply.</strong>
+            Reply <strong>STOP</strong> to cancel at any time. Reply <strong>HELP</strong>
+            for help. Consent is not required as a condition of residency or any
+            purchase. See <a href="#privacy">Privacy Policy</a> below.
+          </span>
+        </label>
+      </div>
+
+      <button type="submit">Sign Up for Water Alerts</button>
+    </form>
+  </div>
+  <!-- ========== END FORM ========== -->
+
+  <h2 class="section">What Messages Look Like</h2>
+  <p>You will only receive a message when a water spike is detected in your building phase:</p>
+  <div class="sample-msg">[Foundry WP] Water spike in Phase 1: +47% above normal. Possible leak. Check for running toilets or open valves. Reply STOP to opt out.</div>
+  <div class="sample-msg">[Foundry WP] PERSISTENT Water spike in Phase 2: 185 gal/hr (+52% above avg) for 3+ hrs. Check for leaks. Reply STOP to opt out.</div>
 
   <div class="notice">
-    <strong>Message and data rates may apply.</strong> Carriers are not liable for delayed or undelivered messages.
+    <strong>Message &amp; data rates may apply.</strong> Carriers are not liable for delayed or undelivered messages.
   </div>
 
-  <h2>How to Opt Out</h2>
+  <h2 class="section">How to Opt Out</h2>
   <p>
-    Recipients can opt out at any time by replying <strong>STOP</strong> to any alert message.
-    After opting out, no further messages will be sent. To opt back in, contact the board directly.
+    Reply <strong>STOP</strong> to any alert to unsubscribe immediately. You will receive
+    one confirmation message and no further alerts. To re-enroll, use the form above or
+    contact the board.
   </p>
 
-  <h2>Help</h2>
+  <h2 class="section">Help</h2>
   <p>
-    Reply <strong>HELP</strong> to any message or contact the board at
-    <a href="mailto:foundrynewburgh@gmail.com">foundrynewburgh@gmail.com</a> for assistance.
+    Reply <strong>HELP</strong> to any message, or contact the board at
+    <a href="mailto:foundrynewburgh@gmail.com">foundrynewburgh@gmail.com</a>.
   </p>
 
-  <h2>Privacy</h2>
-  <p>
-    Mobile phone numbers collected for this program are used solely to deliver water
-    spike alerts to residents of The Foundry at Washington Park. Phone numbers are
-    <strong>not shared with third parties</strong>, not used for marketing, and not
-    sold. Numbers are stored securely and removed upon opt-out request.
-  </p>
+  <h2 class="section" id="privacy">Privacy Policy</h2>
+  <ul>
+    <li>Mobile numbers collected are used <strong>only</strong> to deliver water usage alerts to residents of The Foundry at Washington Park.</li>
+    <li>Phone numbers are <strong>never shared with third parties</strong>, never used for marketing, and never sold.</li>
+    <li>Numbers are removed from the alert list upon opt-out (STOP reply) or written request to the board.</li>
+    <li>Consent records are retained by the board of directors.</li>
+  </ul>
 
-  <h2>Sender</h2>
+  <h2 class="section">Terms of Service</h2>
+  <ul>
+    <li>This program is operated by The Foundry at Washington Park Condominium Association.</li>
+    <li>Alerts are automated and event-triggered — not sent on a fixed schedule.</li>
+    <li>The association is not liable for delayed or undelivered messages due to carrier issues.</li>
+    <li>Participation is voluntary. You may opt out at any time by replying STOP.</li>
+  </ul>
+
+  <h2 class="section">About This Program</h2>
   <p>
-    Messages are sent from <strong>+1 (833) 896-3879</strong> on behalf of
-    The Foundry at Washington Park Condominium Association.
+    Messages are sent from <strong>+1&nbsp;(833)&nbsp;896-3879</strong> on behalf of
+    The Foundry at Washington Park Condominium Association, Newburgh, NY.
+    This number sends utility alerts only.
   </p>
 
   <footer>
-    The Foundry at Washington Park Condominium Association &mdash; Newburgh, NY<br />
+    The Foundry at Washington Park Condominium Association &mdash; Newburgh, NY<br>
     Board contact: <a href="mailto:foundrynewburgh@gmail.com">foundrynewburgh@gmail.com</a>
   </footer>
 
