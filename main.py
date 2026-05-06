@@ -13,7 +13,7 @@ from datetime import datetime
 import pytz
 
 from fetch_data import load_config, get_yesterday_usage, get_recent_hourly, get_30day_baseline
-from detect_spikes import check_daily_spike, check_hourly_spike
+from detect_spikes import check_hourly_spike
 from send_email import send_daily_digest, send_spike_alert
 from send_sms import send_spike_sms
 from load_recipients import load_email_list, load_sms_list
@@ -89,9 +89,8 @@ def run_test(config):
         }
     ]
 
-    board_emails = config["email"]["always_notify"]
     send_spike_alert(fake_spikes, {}, config)
-    logger.info(f"Test spike alert sent to: {board_emails}")
+    logger.info(f"Test spike alert sent to: {config['email']['always_notify']}")
 
     # Optionally test SMS (comment out if not ready)
     # board_phones = ["+1XXXXXXXXXX"]  # add your number here
