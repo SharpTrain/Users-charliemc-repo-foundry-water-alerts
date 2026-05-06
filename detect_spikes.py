@@ -76,14 +76,14 @@ def check_hourly_spike(recent_hourly, baselines, config):
         if not latest:
             continue
 
-        current_val = latest.get("gallons") or latest.get("value") or 0
+        current_val = latest.get("total") or latest.get("gallons") or latest.get("value") or 0
         ratio = current_val / avg_hourly if avg_hourly > 0 else 0
         pct_over = (ratio - 1) * 100
 
         # Count consecutive above-threshold hours
         consecutive = 0
         for r in reversed(readings):
-            val = r.get("gallons") or r.get("value") or 0
+            val = r.get("total") or r.get("gallons") or r.get("value") or 0
             if val / avg_hourly >= threshold:
                 consecutive += 1
             else:

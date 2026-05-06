@@ -64,7 +64,7 @@ def get_yesterday_usage(config):
 
             # BlueBot returns a list of { timestamp, value/gallons } records
             readings = data if isinstance(data, list) else (data.get("data") or data.get("readings") or [])
-            gallons = sum(r.get("gallons") or r.get("value") or 0 for r in readings)
+            gallons = sum(r.get("total") or r.get("gallons") or r.get("value") or 0 for r in readings)
 
             results[phase["id"]] = {
                 "name": phase["name"],
@@ -151,7 +151,7 @@ def get_30day_baseline(config):
 
             readings = data if isinstance(data, list) else (data.get("data") or data.get("readings") or [])
             if readings:
-                values = [r.get("gallons") or r.get("value") or 0 for r in readings]
+                values = [r.get("total") or r.get("gallons") or r.get("value") or 0 for r in readings]
                 avg_daily = sum(values) / len(values)
             else:
                 avg_daily = 0
