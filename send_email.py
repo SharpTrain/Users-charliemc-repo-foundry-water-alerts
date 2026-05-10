@@ -18,22 +18,32 @@ def _build_daily_digest_html(phase_data, baselines, config):
     date_str = datetime.now(tz).strftime("%A, %B %d, %Y")
     prop_name = config["property"]["name"]
 
+    # Build limit lookup from config
+    limits = {p["id"]: p.get("daily_gallon_limit") for p in config["bluebot"]["phases"]}
+
     rows = ""
     for phase_id, data in phase_data.items():
         if data.get("error"):
-            rows += f"<tr><td>{data['name']}</td><td colspan='3'>Data unavailable</td></tr>"
+            rows += f"<tr><td>{data['name']}</td><td colspan='4'>Data unavailable</td></tr>"
             continue
-        avg = baselines.get(phase_id, {}).get("avg_daily_gallons", 0)
         gallons = data.get("gallons", 0) or 0
-        pct = ((gallons / avg) - 1) * 100 if avg > 0 else 0
         per_unit = gallons / data["unit_count"] if data["unit_count"] else 0
-        trend = "▲" if pct > 5 else ("▼" if pct < -5 else "—")
-        color = "#d9534f" if pct > 20 else ("#f0ad4e" if pct > 5 else "#5cb85c")
+        avg = baselines.get(phase_id, {}).get("avg_daily_gallons", 0)
+        avg_str = f"{avg:,.0f} gal" if avg > 0 else "—"
+        limit = limits.get(phase_id)
+        if limit:
+            over = gallons - limit
+            if over > 0:
+                limit_cell = f"<td style='color:#d9534f'><b>{gallons:,.0f} / {limit:,} gal (+{over:,.0f} OVER)</b></td>"
+            else:
+                limit_cell = f"<td style='color:#5cb85c'>{gallons:,.0f} / {limit:,} gal ({abs(over):,.0f} under)</td>"
+        else:
+            limit_cell = f"<td>{gallons:,.0f} gal</td>"
         rows += (
             f"<tr>"
             f"<td><b>{data['name']}</b></td>"
-            f"<td>{gallons:,.0f} gal</td>"
-            f"<td style='color:{color}'>{trend} {pct:+.1f}%</td>"
+            f"{limit_cell}"
+            f"<td>{avg_str}</td>"
             f"<td>{per_unit:.1f} gal/unit</td>"
             f"</tr>"
         )
@@ -46,7 +56,7 @@ def _build_daily_digest_html(phase_data, baselines, config):
   style="border-collapse:collapse;font-size:14px">
   <thead style="background:#2c7be5;color:white">
     <tr>
-      <th>Phase</th><th>Yesterday Total</th><th>vs 30-Day Avg</th><th>Per Unit Avg</th>
+      <th>Phase</th><th>Yesterday vs Daily Limit</th><th>30-Day Avg</th><th>Per Unit Avg</th>
     </tr>
   </thead>
   <tbody>{rows}</tbody>
@@ -68,36 +78,26 @@ def _build_spike_alert_html(spikes, config):
 
     items = ""
     for s in spikes:
-        if s["type"] == "daily":
-            items += f"""
+        items += f"""
 <tr>
   <td><b>{s['phase_name']}</b></td>
-  <td>{s['gallons']:,.0f} gal</td>
-  <td style="color:#d9534f"><b>+{s['pct_over']:.1f}%</b> over avg</td>
-  <td>Daily total</td>
-</tr>"""
-        else:
-            label = "Persistent spike" if s.get("persistent") else "Hourly spike"
-            items += f"""
-<tr>
-  <td><b>{s['phase_name']}</b></td>
-  <td>{s['current_gallons_per_hour']:,.0f} gal/hr</td>
-  <td style="color:#d9534f"><b>+{s['pct_over']:.1f}%</b> over avg</td>
-  <td>{label} ({s['consecutive_hours']} hrs)</td>
+  <td>{s['gallons_today']:,.0f} gal used today</td>
+  <td style="color:#d9534f"><b>+{s['gallons_over']:,.0f} gal</b> over {s['daily_limit']:,} gal limit</td>
+  <td>{s['per_unit_gallons']:.1f} gal/unit</td>
 </tr>"""
 
     return f"""
 <html><body style="font-family:Arial,sans-serif;max-width:600px;margin:auto">
 <div style="background:#d9534f;color:white;padding:16px;border-radius:4px">
-  <h2 style="margin:0">⚠ Water Usage Spike Alert</h2>
+  <h2 style="margin:0">Water Usage Alert</h2>
   <p style="margin:4px 0 0 0">{prop_name} — {now_str}</p>
 </div>
-<p>Abnormal water usage has been detected. Please inspect your unit for leaks,
+<p>Today's water usage has exceeded the daily limit. Please inspect for leaks,
 running toilets, or open faucets.</p>
 <table border="1" cellpadding="8" cellspacing="0" width="100%"
   style="border-collapse:collapse;font-size:14px;margin-top:16px">
   <thead style="background:#d9534f;color:white">
-    <tr><th>Phase</th><th>Current Usage</th><th>Variance</th><th>Type</th></tr>
+    <tr><th>Phase</th><th>Usage Today</th><th>vs Daily Limit</th><th>Per Unit</th></tr>
   </thead>
   <tbody>{items}</tbody>
 </table>
@@ -167,7 +167,7 @@ def send_spike_alert(spikes, phase_recipients, config):
         recipients.update(phase_recipients.get(phase_id, []))
 
     subject = (
-        f"[WATER ALERT] Spike Detected — "
+        f"[WATER ALERT] Daily Limit Exceeded — "
         + ", ".join(s["phase_name"] for s in spikes)
     )
     html = _build_spike_alert_html(spikes, config)

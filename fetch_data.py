@@ -86,15 +86,14 @@ def get_yesterday_usage(config):
     return results
 
 
-def get_recent_hourly(config, hours=4):
+def get_today_totals(config):
     """
-    Fetch the last N hours of hourly usage for spike detection.
-    Uses /total/hourly/{meter_serial}.
-    Returns: dict of { phase_id: { 'name', 'readings': [...] } }
+    Fetch today's cumulative usage from midnight to now by summing hourly readings.
+    Returns: dict of { phase_id: { 'name', 'gallons', 'unit_count', 'daily_gallon_limit' } }
     """
     tz = pytz.timezone(config["property"]["timezone"])
     now = datetime.now(tz)
-    start = now - timedelta(hours=hours)
+    start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
     results = {}
     base_url = config["bluebot"]["base_url"]
@@ -112,14 +111,24 @@ def get_recent_hourly(config, hours=4):
             data = resp.json()
 
             readings = data if isinstance(data, list) else (data.get("data") or data.get("readings") or [])
+            gallons = sum(r.get("total") or r.get("gallons") or r.get("value") or 0 for r in readings)
+
             results[phase["id"]] = {
                 "name": phase["name"],
-                "readings": readings,
+                "gallons": gallons,
+                "unit_count": phase["unit_count"],
+                "daily_gallon_limit": phase.get("daily_gallon_limit"),
             }
-            logger.info(f"Fetched hourly: Phase {phase['name']} = {len(readings)} records")
+            logger.info(f"Today so far: Phase {phase['name']} = {gallons:.0f} gal")
         except Exception as e:
-            logger.error(f"Failed to fetch hourly for phase {phase['name']}: {e}")
-            results[phase["id"]] = {"name": phase["name"], "readings": [], "error": str(e)}
+            logger.error(f"Failed to fetch today totals for phase {phase['name']}: {e}")
+            results[phase["id"]] = {
+                "name": phase["name"],
+                "gallons": None,
+                "unit_count": phase["unit_count"],
+                "daily_gallon_limit": phase.get("daily_gallon_limit"),
+                "error": str(e),
+            }
 
     return results
 

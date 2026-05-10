@@ -31,20 +31,12 @@ def send_spike_sms(spikes, phase_phone_list, config):
         phase_id = spike["phase_id"]
         phase_name = spike["phase_name"]
 
-        if spike["type"] == "daily":
-            body = (
-                f"[{prop_short}] Water spike in {phase_name}: "
-                f"+{spike['pct_over']:.0f}% above normal yesterday. "
-                f"Check for leaks. Reply STOP to opt out."
-            )
-        else:
-            tag = "PERSISTENT " if spike.get("persistent") else ""
-            body = (
-                f"[{prop_short}] {tag}Water spike in {phase_name}: "
-                f"{spike['current_gallons_per_hour']:.0f} gal/hr "
-                f"(+{spike['pct_over']:.0f}% above avg). "
-                f"Check for leaks. Reply STOP to opt out."
-            )
+        body = (
+            f"[{prop_short}] {phase_name} hit daily water limit: "
+            f"{spike['gallons_today']:,.0f} gal used "
+            f"({spike['gallons_over']:,.0f} over {spike['daily_limit']:,} gal limit). "
+            f"Check for leaks. Reply STOP to opt out."
+        )
 
         phones = phase_phone_list.get(phase_id, [])
         for phone in phones:

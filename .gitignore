@@ -1,6 +1,7 @@
 config.yaml
 residents_email.csv
 residents_sms.csv
+alert_state.json
 *.log
 __pycache__/
 .env
