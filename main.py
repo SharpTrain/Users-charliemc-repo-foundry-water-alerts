@@ -11,12 +11,12 @@ import json
 import logging
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 import pytz
 
 from fetch_data import load_config, get_yesterday_usage, get_today_totals, get_30day_baseline
 from detect_spikes import check_daily_total_threshold
-from send_email import send_daily_digest, send_spike_alert
+from send_email import send_daily_digest, send_spike_alert, send_today_digest
 from send_sms import send_spike_sms
 from load_recipients import load_email_list, load_sms_list
 
@@ -31,6 +31,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 STATE_FILE = "alert_state.json"
+FOLLOWUP_INTERVAL_HOURS = 2.5
 
 
 def _load_alert_state():
@@ -79,33 +80,74 @@ def run_spike_check(config):
         return
 
     tz = pytz.timezone(config["property"]["timezone"])
-    today = datetime.now(tz).strftime("%Y-%m-%d")
+    now = datetime.now(tz)
+    now_utc = datetime.now(timezone.utc)
+    today = now.strftime("%Y-%m-%d")
 
     state = _load_alert_state()
     alerted_on = state.get("alerted_on", {})
+    last_alert_time = state.get("last_alert_time", {})
 
     today_usage = get_today_totals(config)
     all_triggers = check_daily_total_threshold(today_usage, config)
 
-    # Only alert for phases not already alerted today
-    new_spikes = [s for s in all_triggers if alerted_on.get(s["phase_id"]) != today]
+    new_spikes = []
+    followup_spikes = []
+
+    for s in all_triggers:
+        pid = s["phase_id"]
+        if alerted_on.get(pid) != today:
+            new_spikes.append(s)
+        else:
+            last_t_str = last_alert_time.get(pid)
+            if last_t_str:
+                last_t = datetime.fromisoformat(last_t_str)
+                elapsed_hours = (now_utc - last_t).total_seconds() / 3600
+                if elapsed_hours >= FOLLOWUP_INTERVAL_HOURS:
+                    followup_spikes.append(s)
+                    logger.info(
+                        f"{s['phase_name']}: {elapsed_hours:.1f}h since last alert — queuing follow-up"
+                    )
 
     if new_spikes:
-        logger.warning(f"Daily limit exceeded (first alert today): {[s['phase_name'] for s in new_spikes]}")
+        logger.warning(f"Daily limit exceeded (initial alert): {[s['phase_name'] for s in new_spikes]}")
         _, emails_by_phase = load_email_list()
         _, phones_by_phase = load_sms_list()
-
         send_spike_alert(new_spikes, emails_by_phase, config)
         send_spike_sms(new_spikes, phones_by_phase, config)
-
         for s in new_spikes:
             alerted_on[s["phase_id"]] = today
-        state["alerted_on"] = alerted_on
-        _save_alert_state(state)
-    elif all_triggers:
-        logger.info(f"Daily limit exceeded but already alerted today: {[s['phase_name'] for s in all_triggers]}")
-    else:
-        logger.info("No daily limits exceeded.")
+            last_alert_time[s["phase_id"]] = now_utc.isoformat()
+
+    if followup_spikes:
+        logger.warning(f"Still over limit (follow-up): {[s['phase_name'] for s in followup_spikes]}")
+        _, emails_by_phase = load_email_list()
+        _, phones_by_phase = load_sms_list()
+        send_spike_alert(followup_spikes, emails_by_phase, config, is_followup=True)
+        send_spike_sms(followup_spikes, phones_by_phase, config, is_followup=True)
+        for s in followup_spikes:
+            last_alert_time[s["phase_id"]] = now_utc.isoformat()
+
+    if not new_spikes and not followup_spikes:
+        if all_triggers:
+            logger.info(
+                f"Over limit but follow-up not due yet: {[s['phase_name'] for s in all_triggers]}"
+            )
+        else:
+            logger.info("No daily limits exceeded.")
+
+    state["alerted_on"] = alerted_on
+    state["last_alert_time"] = last_alert_time
+    _save_alert_state(state)
+
+
+def run_today(config):
+    """Send an evening digest of today's running totals to all board members."""
+    logger.info("=== Running TODAY summary ===")
+    today_usage = get_today_totals(config)
+    all_emails, _ = load_email_list()
+    send_today_digest(today_usage, all_emails, config)
+    logger.info("Today's summary sent.")
 
 
 def run_test(config):
@@ -134,9 +176,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--mode",
-        choices=["daily", "spike", "test"],
+        choices=["daily", "spike", "today", "test"],
         required=True,
-        help="daily = morning digest, spike = daily total check, test = send test alert",
+        help="daily = morning digest, spike = 15-min check, today = evening summary, test = send test alert",
     )
     parser.add_argument("--config", default="config.yaml")
     args = parser.parse_args()
@@ -147,6 +189,8 @@ def main():
         run_daily(config)
     elif args.mode == "spike":
         run_spike_check(config)
+    elif args.mode == "today":
+        run_today(config)
     elif args.mode == "test":
         run_test(config)
 

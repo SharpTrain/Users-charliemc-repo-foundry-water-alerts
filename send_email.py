@@ -71,10 +71,26 @@ def _build_daily_digest_html(phase_data, baselines, config):
 """
 
 
-def _build_spike_alert_html(spikes, config):
+def _build_spike_alert_html(spikes, config, is_followup=False):
     prop_name = config["property"]["name"]
     tz = pytz.timezone(config["property"]["timezone"])
     now_str = datetime.now(tz).strftime("%A, %B %d %Y at %I:%M %p")
+
+    header_color = "#e8820c" if is_followup else "#d9534f"
+    header_title = "Water Usage Reminder" if is_followup else "Water Usage Alert"
+    intro = (
+        "Water usage is still above the daily limit. This is a reminder — "
+        "please confirm the issue is being addressed."
+        if is_followup else
+        "Today's water usage has exceeded the daily limit. Please inspect for leaks, "
+        "running toilets, or open faucets."
+    )
+    followup_note = (
+        f"<p style='color:{header_color};font-size:13px'>"
+        "Reminders will continue every 2.5 hours while usage remains above the daily limit."
+        "</p>"
+        if is_followup else ""
+    )
 
     items = ""
     for s in spikes:
@@ -88,15 +104,15 @@ def _build_spike_alert_html(spikes, config):
 
     return f"""
 <html><body style="font-family:Arial,sans-serif;max-width:600px;margin:auto">
-<div style="background:#d9534f;color:white;padding:16px;border-radius:4px">
-  <h2 style="margin:0">Water Usage Alert</h2>
+<div style="background:{header_color};color:white;padding:16px;border-radius:4px">
+  <h2 style="margin:0">{header_title}</h2>
   <p style="margin:4px 0 0 0">{prop_name} — {now_str}</p>
 </div>
-<p>Today's water usage has exceeded the daily limit. Please inspect for leaks,
-running toilets, or open faucets.</p>
+<p>{intro}</p>
+{followup_note}
 <table border="1" cellpadding="8" cellspacing="0" width="100%"
   style="border-collapse:collapse;font-size:14px;margin-top:16px">
-  <thead style="background:#d9534f;color:white">
+  <thead style="background:{header_color};color:white">
     <tr><th>Phase</th><th>Usage Today</th><th>vs Daily Limit</th><th>Per Unit</th></tr>
   </thead>
   <tbody>{items}</tbody>
@@ -111,6 +127,65 @@ running toilets, or open faucets.</p>
 <p>If you notice a leak, contact property management immediately.</p>
 <p style="color:#666;font-size:12px">
   To unsubscribe from alerts, reply with UNSUBSCRIBE.
+</p>
+</body></html>
+"""
+
+
+def _build_today_summary_html(phase_data, config):
+    tz = pytz.timezone(config["property"]["timezone"])
+    date_str = datetime.now(tz).strftime("%A, %B %d, %Y at %I:%M %p")
+    prop_name = config["property"]["name"]
+    limits = {p["id"]: p.get("daily_gallon_limit") for p in config["bluebot"]["phases"]}
+
+    rows = ""
+    for phase_id, data in phase_data.items():
+        if data.get("error"):
+            rows += f"<tr><td>{data['name']}</td><td colspan='3'>Data unavailable</td></tr>"
+            continue
+        gallons = data.get("gallons", 0) or 0
+        per_unit = gallons / data["unit_count"] if data["unit_count"] else 0
+        limit = limits.get(phase_id)
+        if limit:
+            over = gallons - limit
+            if over > 0:
+                limit_cell = (
+                    f"<td style='color:#d9534f'>"
+                    f"<b>{gallons:,.0f} / {limit:,} gal (+{over:,.0f} OVER)</b></td>"
+                )
+            else:
+                limit_cell = (
+                    f"<td style='color:#5cb85c'>"
+                    f"{gallons:,.0f} / {limit:,} gal ({abs(over):,.0f} under)</td>"
+                )
+        else:
+            limit_cell = f"<td>{gallons:,.0f} gal</td>"
+        rows += (
+            f"<tr>"
+            f"<td><b>{data['name']}</b></td>"
+            f"{limit_cell}"
+            f"<td>{per_unit:.1f} gal/unit</td>"
+            f"</tr>"
+        )
+
+    return f"""
+<html><body style="font-family:Arial,sans-serif;max-width:600px;margin:auto">
+<h2 style="color:#2c7be5">{prop_name}</h2>
+<h3>Today's Water Usage — Running Total as of {date_str}</h3>
+<table border="1" cellpadding="8" cellspacing="0" width="100%"
+  style="border-collapse:collapse;font-size:14px">
+  <thead style="background:#2c7be5;color:white">
+    <tr>
+      <th>Phase</th><th>Today vs Daily Limit</th><th>Per Unit</th>
+    </tr>
+  </thead>
+  <tbody>{rows}</tbody>
+</table>
+<p style="color:#666;font-size:12px;margin-top:24px">
+  Water-saving tip: A running toilet wastes up to 200 gallons/day.
+  Report leaks to management immediately.<br><br>
+  You are receiving this as a board member of {prop_name}.
+  To unsubscribe, reply with UNSUBSCRIBE.
 </p>
 </body></html>
 """
@@ -152,9 +227,9 @@ def send_daily_digest(phase_data, baselines, recipients, config):
     send_email(all_recipients, subject, html, config)
 
 
-def send_spike_alert(spikes, phase_recipients, config):
+def send_spike_alert(spikes, phase_recipients, config, is_followup=False):
     """
-    Send spike alert to affected-phase residents + board.
+    Send spike alert (or follow-up reminder) to affected-phase residents + board.
     phase_recipients: dict of { phase_id: [email, ...] }
     """
     if not spikes:
@@ -166,9 +241,25 @@ def send_spike_alert(spikes, phase_recipients, config):
     for phase_id in affected_phases:
         recipients.update(phase_recipients.get(phase_id, []))
 
-    subject = (
-        f"[WATER ALERT] Daily Limit Exceeded — "
-        + ", ".join(s["phase_name"] for s in spikes)
-    )
-    html = _build_spike_alert_html(spikes, config)
+    if is_followup:
+        subject = (
+            "[WATER REMINDER] Still Over Limit — "
+            + ", ".join(s["phase_name"] for s in spikes)
+        )
+    else:
+        subject = (
+            "[WATER ALERT] Daily Limit Exceeded — "
+            + ", ".join(s["phase_name"] for s in spikes)
+        )
+    html = _build_spike_alert_html(spikes, config, is_followup=is_followup)
     send_email(list(recipients), subject, html, config)
+
+
+def send_today_digest(phase_data, recipients, config):
+    """Send an evening digest of today's running totals to all recipients."""
+    tz = pytz.timezone(config["property"]["timezone"])
+    date_str = datetime.now(tz).strftime("%B %d, %Y")
+    subject = f"[Water Report] Today's Running Total — {date_str}"
+    html = _build_today_summary_html(phase_data, config)
+    all_recipients = list(set(recipients + config["email"]["always_notify"]))
+    send_email(all_recipients, subject, html, config)

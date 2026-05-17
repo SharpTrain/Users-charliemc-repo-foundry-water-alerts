@@ -2,15 +2,17 @@ name: Water Usage Alerts
 
 on:
   schedule:
-    # Daily digest: 5 AM Eastern Standard Time = 10:00 UTC (6 AM in EDT/summer)
+    # Morning digest: 6 AM Eastern (10:00 UTC in summer EDT)
     - cron: "0 10 * * *"
+    # Evening summary: 7 PM Eastern (23:00 UTC in summer EDT)
+    - cron: "0 23 * * *"
     # Spike check: every 15 minutes
     - cron: "*/15 * * * *"
   # Manual trigger from GitHub Actions tab
   workflow_dispatch:
     inputs:
       mode:
-        description: "Mode: daily, spike, or test"
+        description: "Mode: daily, spike, today, or test"
         required: true
         default: "test"
 
@@ -29,6 +31,18 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
+
+      - name: Set today's date (Eastern)
+        id: date
+        run: echo "today=$(TZ=America/New_York date +%Y-%m-%d)" >> $GITHUB_OUTPUT
+
+      - name: Restore alert state
+        uses: actions/cache@v4
+        with:
+          path: alert_state.json
+          key: alert-state-${{ steps.date.outputs.today }}-${{ github.run_number }}
+          restore-keys: |
+            alert-state-${{ steps.date.outputs.today }}-
 
       - name: Write config from secrets
         run: |
@@ -83,7 +97,7 @@ jobs:
       - name: Write resident SMS list
         run: echo "${{ secrets.RESIDENTS_SMS_CSV }}" > residents_sms.csv
 
-      - name: Run daily digest (5 AM Eastern)
+      - name: Run daily digest (6 AM Eastern)
         if: >
           (github.event_name == 'schedule' && github.event.schedule == '0 10 * * *') ||
           (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'daily')
@@ -94,6 +108,12 @@ jobs:
           (github.event_name == 'schedule' && github.event.schedule == '*/15 * * * *') ||
           (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'spike')
         run: python main.py --mode spike
+
+      - name: Run evening summary (7 PM Eastern)
+        if: >
+          (github.event_name == 'schedule' && github.event.schedule == '0 23 * * *') ||
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'today')
+        run: python main.py --mode today
 
       - name: Run test
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'test'
