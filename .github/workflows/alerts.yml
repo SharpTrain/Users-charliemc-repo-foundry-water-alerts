@@ -44,9 +44,11 @@ jobs:
               - id: "BB8100016943"
                 name: "Phase 1"
                 unit_count: 27
+                daily_gallon_limit: 2000
               - id: "BB8100014332"
                 name: "Phase 2"
                 unit_count: 34
+                daily_gallon_limit: 3000
 
           email:
             sender: "foundrywater@gmail.com"
