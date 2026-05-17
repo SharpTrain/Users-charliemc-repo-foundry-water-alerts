@@ -91,6 +91,9 @@ jobs:
             quiet_hours_end: 6
           EOF
 
+      - name: Validate config
+        run: python validate_config.py
+
       - name: Write resident email list
         run: echo "${{ secrets.RESIDENTS_EMAIL_CSV }}" > residents_email.csv
 
