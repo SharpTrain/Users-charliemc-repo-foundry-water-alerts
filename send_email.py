@@ -71,49 +71,45 @@ def _build_daily_digest_html(phase_data, baselines, config):
 """
 
 
-def _build_spike_alert_html(spikes, config, is_followup=False):
+def _build_spike_alert_html(spikes, config):
     prop_name = config["property"]["name"]
     tz = pytz.timezone(config["property"]["timezone"])
     now_str = datetime.now(tz).strftime("%A, %B %d %Y at %I:%M %p")
 
-    header_color = "#e8820c" if is_followup else "#d9534f"
-    header_title = "Water Usage Reminder" if is_followup else "Water Usage Alert"
-    intro = (
-        "Water usage is still above the daily limit. This is a reminder — "
-        "please confirm the issue is being addressed."
-        if is_followup else
-        "Today's water usage has exceeded the daily limit. Please inspect for leaks, "
-        "running toilets, or open faucets."
-    )
-    followup_note = (
-        f"<p style='color:{header_color};font-size:13px'>"
-        "Reminders will continue every 2.5 hours while usage remains above the daily limit."
-        "</p>"
-        if is_followup else ""
-    )
+    # Red for the initial limit crossing, orange for subsequent 250-gal bands.
+    initial = any(s.get("threshold_hit", s["daily_limit"]) == s["daily_limit"] for s in spikes)
+    header_color = "#d9534f" if initial else "#e8820c"
+    increment = spikes[0].get("increment", 250) if spikes else 250
 
     items = ""
     for s in spikes:
+        threshold_hit = s.get("threshold_hit", s["daily_limit"])
+        is_first = threshold_hit == s["daily_limit"]
+        bands_over = (threshold_hit - s["daily_limit"]) // increment
+        band_note = "Daily limit reached" if is_first else f"+{bands_over * increment:,} gal above limit"
+
         items += f"""
 <tr>
   <td><b>{s['phase_name']}</b></td>
   <td>{s['gallons_today']:,.0f} gal used today</td>
   <td style="color:#d9534f"><b>+{s['gallons_over']:,.0f} gal</b> over {s['daily_limit']:,} gal limit</td>
   <td>{s['per_unit_gallons']:.1f} gal/unit</td>
+  <td style="color:#888;font-size:12px">{band_note}</td>
 </tr>"""
 
     return f"""
 <html><body style="font-family:Arial,sans-serif;max-width:600px;margin:auto">
 <div style="background:{header_color};color:white;padding:16px;border-radius:4px">
-  <h2 style="margin:0">{header_title}</h2>
+  <h2 style="margin:0">Water Usage Alert</h2>
   <p style="margin:4px 0 0 0">{prop_name} — {now_str}</p>
 </div>
-<p>{intro}</p>
-{followup_note}
+<p>Today's water usage has exceeded the daily limit. Alerts fire at the limit and at
+every additional {increment:,} gallons above it. Please inspect for leaks,
+running toilets, or open faucets.</p>
 <table border="1" cellpadding="8" cellspacing="0" width="100%"
   style="border-collapse:collapse;font-size:14px;margin-top:16px">
   <thead style="background:{header_color};color:white">
-    <tr><th>Phase</th><th>Usage Today</th><th>vs Daily Limit</th><th>Per Unit</th></tr>
+    <tr><th>Phase</th><th>Usage Today</th><th>vs Daily Limit</th><th>Per Unit</th><th>Status</th></tr>
   </thead>
   <tbody>{items}</tbody>
 </table>
@@ -227,9 +223,9 @@ def send_daily_digest(phase_data, baselines, recipients, config):
     send_email(all_recipients, subject, html, config)
 
 
-def send_spike_alert(spikes, phase_recipients, config, is_followup=False):
+def send_spike_alert(spikes, phase_recipients, config):
     """
-    Send spike alert (or follow-up reminder) to affected-phase residents + board.
+    Send threshold-crossing alert to affected-phase residents + board.
     phase_recipients: dict of { phase_id: [email, ...] }
     """
     if not spikes:
@@ -237,21 +233,17 @@ def send_spike_alert(spikes, phase_recipients, config, is_followup=False):
 
     affected_phases = set(s["phase_id"] for s in spikes)
     recipients = set(config["email"]["always_notify"])
-
     for phase_id in affected_phases:
         recipients.update(phase_recipients.get(phase_id, []))
 
-    if is_followup:
-        subject = (
-            "[WATER REMINDER] Still Over Limit — "
-            + ", ".join(s["phase_name"] for s in spikes)
-        )
-    else:
-        subject = (
-            "[WATER ALERT] Daily Limit Exceeded — "
-            + ", ".join(s["phase_name"] for s in spikes)
-        )
-    html = _build_spike_alert_html(spikes, config, is_followup=is_followup)
+    # Subject shows which phase(s) and the threshold level hit.
+    phase_summaries = []
+    for s in spikes:
+        t = s.get("threshold_hit", s["daily_limit"])
+        phase_summaries.append(f"{s['phase_name']} @ {t:,} gal")
+    subject = "[WATER ALERT] " + ", ".join(phase_summaries)
+
+    html = _build_spike_alert_html(spikes, config)
     send_email(list(recipients), subject, html, config)
 
 

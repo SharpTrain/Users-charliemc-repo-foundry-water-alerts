@@ -1,45 +1,74 @@
 """
 detect_spikes.py
-Compares today's running total against each phase's fixed daily gallon limit.
+Determines which 250-gallon threshold bands have been newly crossed today.
+
+Each phase fires an alert at its daily_gallon_limit, then again at every
+additional increment_gallons above that (default 250 gal).
+
+  Phase 1 (2,000 limit): alerts at 2000, 2250, 2500, 2750 ...
+  Phase 2 (3,000 limit): alerts at 3000, 3250, 3500, 3750 ...
 """
 
 import logging
 
 logger = logging.getLogger(__name__)
 
+_DEFAULT_INCREMENT = 250
 
-def check_daily_total_threshold(today_usage, config):
-    """
-    Compare today's running total against each phase's daily_gallon_limit.
-    Returns list of spike dicts for phases that have exceeded their limit.
-    """
-    limits = {p["id"]: p.get("daily_gallon_limit") for p in config["bluebot"]["phases"]}
-    spikes = []
 
-    for phase_id, data in today_usage.items():
+def get_crossed_thresholds(gallons, base_limit, increment=_DEFAULT_INCREMENT):
+    """Return sorted list of every gallon threshold crossed (base_limit, +increment, +2×, ...)."""
+    if gallons < base_limit:
+        return []
+    count = int((gallons - base_limit) / increment) + 1
+    return [base_limit + i * increment for i in range(count)]
+
+
+def check_new_threshold_crossings(today_usage, config, alerted_thresholds):
+    """
+    For each phase, return spike dicts for thresholds crossed but not yet alerted today.
+
+    today_usage:       output of fetch_data.get_today_totals()
+    config:            loaded config.yaml dict
+    alerted_thresholds: { phase_id: [gallon levels already alerted today] }
+
+    Returns list of spike dicts, one per phase that has new crossings.
+    """
+    increment = config.get("thresholds", {}).get("increment_gallons", _DEFAULT_INCREMENT)
+    results = []
+
+    for phase in config["bluebot"]["phases"]:
+        phase_id = phase["id"]
+        base_limit = phase.get("daily_gallon_limit")
+        if not base_limit:
+            logger.warning(f"No daily_gallon_limit configured for {phase.get('name')}, skipping")
+            continue
+
+        data = today_usage.get(phase_id, {})
         if data.get("error") or data.get("gallons") is None:
             continue
 
-        limit = limits.get(phase_id)
-        if not limit:
-            logger.warning(f"No daily_gallon_limit configured for {data['name']}, skipping")
-            continue
-
         gallons = data["gallons"]
-        if gallons >= limit:
-            spikes.append({
+        crossed = get_crossed_thresholds(gallons, base_limit, increment)
+        already = set(alerted_thresholds.get(phase_id, []))
+        new = [t for t in crossed if t not in already]
+
+        if new:
+            results.append({
                 "phase_id": phase_id,
                 "phase_name": data["name"],
-                "type": "daily_total",
                 "gallons_today": gallons,
-                "daily_limit": limit,
-                "gallons_over": gallons - limit,
+                "daily_limit": base_limit,
+                "gallons_over": gallons - base_limit,
                 "unit_count": data["unit_count"],
                 "per_unit_gallons": gallons / data["unit_count"] if data["unit_count"] else 0,
+                "threshold_hit": max(new),
+                "new_thresholds": sorted(new),
+                "increment": increment,
             })
             logger.warning(
-                f"DAILY LIMIT EXCEEDED: {data['name']} used {gallons:.0f} gal today "
-                f"(limit: {limit:,} gal, over by {gallons - limit:.0f} gal)"
+                f"NEW THRESHOLD(S) crossed — {data['name']}: "
+                f"{gallons:.0f} gal today, new bands: {sorted(new)}"
             )
 
-    return spikes
+    return results
