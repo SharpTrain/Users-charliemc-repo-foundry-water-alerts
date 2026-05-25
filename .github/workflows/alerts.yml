@@ -4,8 +4,6 @@ on:
   schedule:
     # Morning digest: 6 AM Eastern (10:00 UTC in summer EDT)
     - cron: "0 10 * * *"
-    # Evening summary: 7 PM Eastern (23:00 UTC in summer EDT)
-    - cron: "0 23 * * *"
     # Spike check: every 15 minutes
     - cron: "*/15 * * * *"
   # Manual trigger from GitHub Actions tab
@@ -84,11 +82,9 @@ jobs:
             from_number: "+18338963879"
 
           thresholds:
-            spike_daily_pct: 1.20
-            spike_hourly_pct: 1.20
-            persistent_hours: 3
             quiet_hours_start: 22
             quiet_hours_end: 6
+            increment_gallons: 250
           EOF
 
       - name: Write resident email list
@@ -108,12 +104,6 @@ jobs:
           (github.event_name == 'schedule' && github.event.schedule == '*/15 * * * *') ||
           (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'spike')
         run: python main.py --mode spike
-
-      - name: Run evening summary (7 PM Eastern)
-        if: >
-          (github.event_name == 'schedule' && github.event.schedule == '0 23 * * *') ||
-          (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'today')
-        run: python main.py --mode today
 
       - name: Run test
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'test'

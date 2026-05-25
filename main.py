@@ -11,11 +11,11 @@ import json
 import logging
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime
 import pytz
 
 from fetch_data import load_config, get_yesterday_usage, get_today_totals, get_30day_baseline
-from detect_spikes import check_daily_total_threshold
+from detect_spikes import check_new_threshold_crossings
 from send_email import send_daily_digest, send_spike_alert, send_today_digest
 from send_sms import send_spike_sms
 from load_recipients import load_email_list, load_sms_list
@@ -31,7 +31,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 STATE_FILE = "alert_state.json"
-FOLLOWUP_INTERVAL_HOURS = 2.5
 
 
 def _load_alert_state():
@@ -41,7 +40,7 @@ def _load_alert_state():
                 return json.load(f)
         except Exception:
             pass
-    return {"alerted_on": {}}
+    return {"date": None, "alerted_thresholds": {}}
 
 
 def _save_alert_state(state):
@@ -80,64 +79,35 @@ def run_spike_check(config):
         return
 
     tz = pytz.timezone(config["property"]["timezone"])
-    now = datetime.now(tz)
-    now_utc = datetime.now(timezone.utc)
-    today = now.strftime("%Y-%m-%d")
+    today = datetime.now(tz).strftime("%Y-%m-%d")
 
     state = _load_alert_state()
-    alerted_on = state.get("alerted_on", {})
-    last_alert_time = state.get("last_alert_time", {})
+
+    # Reset state at the start of each new day.
+    if state.get("date") != today:
+        logger.info(f"New day ({today}) — resetting threshold alert state.")
+        state = {"date": today, "alerted_thresholds": {}}
+
+    alerted_thresholds = state.get("alerted_thresholds", {})
 
     today_usage = get_today_totals(config)
-    all_triggers = check_daily_total_threshold(today_usage, config)
+    new_crossings = check_new_threshold_crossings(today_usage, config, alerted_thresholds)
 
-    new_spikes = []
-    followup_spikes = []
-
-    for s in all_triggers:
-        pid = s["phase_id"]
-        if alerted_on.get(pid) != today:
-            new_spikes.append(s)
-        else:
-            last_t_str = last_alert_time.get(pid)
-            if last_t_str:
-                last_t = datetime.fromisoformat(last_t_str)
-                elapsed_hours = (now_utc - last_t).total_seconds() / 3600
-                if elapsed_hours >= FOLLOWUP_INTERVAL_HOURS:
-                    followup_spikes.append(s)
-                    logger.info(
-                        f"{s['phase_name']}: {elapsed_hours:.1f}h since last alert — queuing follow-up"
-                    )
-
-    if new_spikes:
-        logger.warning(f"Daily limit exceeded (initial alert): {[s['phase_name'] for s in new_spikes]}")
+    if new_crossings:
         _, emails_by_phase = load_email_list()
         _, phones_by_phase = load_sms_list()
-        send_spike_alert(new_spikes, emails_by_phase, config)
-        send_spike_sms(new_spikes, phones_by_phase, config)
-        for s in new_spikes:
-            alerted_on[s["phase_id"]] = today
-            last_alert_time[s["phase_id"]] = now_utc.isoformat()
+        send_spike_alert(new_crossings, emails_by_phase, config)
+        send_spike_sms(new_crossings, phones_by_phase, config)
 
-    if followup_spikes:
-        logger.warning(f"Still over limit (follow-up): {[s['phase_name'] for s in followup_spikes]}")
-        _, emails_by_phase = load_email_list()
-        _, phones_by_phase = load_sms_list()
-        send_spike_alert(followup_spikes, emails_by_phase, config, is_followup=True)
-        send_spike_sms(followup_spikes, phones_by_phase, config, is_followup=True)
-        for s in followup_spikes:
-            last_alert_time[s["phase_id"]] = now_utc.isoformat()
+        for s in new_crossings:
+            pid = s["phase_id"]
+            existing = set(alerted_thresholds.get(pid, []))
+            existing.update(s["new_thresholds"])
+            alerted_thresholds[pid] = sorted(existing)
+    else:
+        logger.info("No new threshold crossings.")
 
-    if not new_spikes and not followup_spikes:
-        if all_triggers:
-            logger.info(
-                f"Over limit but follow-up not due yet: {[s['phase_name'] for s in all_triggers]}"
-            )
-        else:
-            logger.info("No daily limits exceeded.")
-
-    state["alerted_on"] = alerted_on
-    state["last_alert_time"] = last_alert_time
+    state["alerted_thresholds"] = alerted_thresholds
     _save_alert_state(state)
 
 
