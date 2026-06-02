@@ -188,16 +188,21 @@ def _build_today_summary_html(phase_data, config):
 
 
 def send_email(to_list, subject, html_body, config):
-    """Send an HTML email to a list of addresses."""
+    """Send individual HTML emails. Logs failures per-recipient but does not raise."""
     sender = config["email"]["sender"]
     password = config["email"]["app_password"]
+    failed = []
 
     try:
         server = smtplib.SMTP(config["email"]["smtp_server"], config["email"]["smtp_port"])
         server.starttls()
         server.login(sender, password)
+    except Exception as e:
+        logger.error(f"SMTP connection failed: {e}")
+        raise
 
-        for recipient in to_list:
+    for recipient in to_list:
+        try:
             msg = MIMEMultipart("alternative")
             msg["Subject"] = subject
             msg["From"] = f"{config['property']['name']} Water Alerts <{sender}>"
@@ -205,53 +210,92 @@ def send_email(to_list, subject, html_body, config):
             msg.attach(MIMEText(html_body, "html"))
             server.sendmail(sender, recipient, msg.as_string())
             logger.info(f"Email sent to {recipient}: {subject}")
+        except smtplib.SMTPException as exc:
+            logger.error(f"Failed to send to {recipient}: {exc}")
+            failed.append(recipient)
+            # Attempt to recover the SMTP session for the next recipient.
+            try:
+                server.quit()
+            except Exception:
+                pass
+            try:
+                server = smtplib.SMTP(config["email"]["smtp_server"], config["email"]["smtp_port"])
+                server.starttls()
+                server.login(sender, password)
+            except Exception as reconnect_err:
+                logger.error(f"SMTP reconnect failed, stopping sends: {reconnect_err}")
+                break
 
+    try:
         server.quit()
-    except Exception as e:
-        logger.error(f"Email send failed: {e}")
-        raise
+    except Exception:
+        pass
+
+    if failed:
+        logger.warning(f"Failed to deliver to {len(failed)} recipient(s): {failed}")
 
 
-def send_daily_digest(phase_data, baselines, recipients, config):
-    """Send the morning usage digest to all recipients."""
+def send_daily_digest(phase_data, baselines, residents, config):
+    """Send morning digest: always_notify first (in order), then residents."""
     tz = pytz.timezone(config["property"]["timezone"])
     date_str = datetime.now(tz).strftime("%B %d, %Y")
     subject = f"[Water Report] Daily Usage Summary — {date_str}"
     html = _build_daily_digest_html(phase_data, baselines, config)
 
-    all_recipients = list(set(recipients + config["email"]["always_notify"]))
-    send_email(all_recipients, subject, html, config)
+    board = config["email"]["always_notify"]
+    board_set = set(board)
+    resident_only = [e for e in residents if e not in board_set]
+
+    # Board first — guaranteed delivery before any rate-limit risk.
+    send_email(board, subject, html, config)
+    if resident_only:
+        send_email(resident_only, subject, html, config)
 
 
 def send_spike_alert(spikes, phase_recipients, config):
     """
-    Send threshold-crossing alert to affected-phase residents + board.
+    Send threshold-crossing alert: board first (in order), then affected-phase residents.
+    Board (always_notify) receives alerts for ALL phases.
+    Residents receive alerts only for their own phase.
     phase_recipients: dict of { phase_id: [email, ...] }
     """
     if not spikes:
         return
 
-    affected_phases = set(s["phase_id"] for s in spikes)
-    recipients = set(config["email"]["always_notify"])
-    for phase_id in affected_phases:
-        recipients.update(phase_recipients.get(phase_id, []))
-
-    # Subject shows which phase(s) and the threshold level hit.
     phase_summaries = []
     for s in spikes:
         t = s.get("threshold_hit", s["daily_limit"])
         phase_summaries.append(f"{s['phase_name']} @ {t:,} gal")
     subject = "[WATER ALERT] " + ", ".join(phase_summaries)
-
     html = _build_spike_alert_html(spikes, config)
-    send_email(list(recipients), subject, html, config)
+
+    board = config["email"]["always_notify"]
+    board_set = set(board)
+
+    affected_phases = set(s["phase_id"] for s in spikes)
+    resident_only = [
+        e
+        for phase_id in affected_phases
+        for e in phase_recipients.get(phase_id, [])
+        if e not in board_set
+    ]
+
+    send_email(board, subject, html, config)
+    if resident_only:
+        send_email(resident_only, subject, html, config)
 
 
 def send_today_digest(phase_data, recipients, config):
-    """Send an evening digest of today's running totals to all recipients."""
+    """Send running-total digest: always_notify first, then residents."""
     tz = pytz.timezone(config["property"]["timezone"])
     date_str = datetime.now(tz).strftime("%B %d, %Y")
     subject = f"[Water Report] Today's Running Total — {date_str}"
     html = _build_today_summary_html(phase_data, config)
-    all_recipients = list(set(recipients + config["email"]["always_notify"]))
-    send_email(all_recipients, subject, html, config)
+
+    board = config["email"]["always_notify"]
+    board_set = set(board)
+    resident_only = [e for e in recipients if e not in board_set]
+
+    send_email(board, subject, html, config)
+    if resident_only:
+        send_email(resident_only, subject, html, config)
