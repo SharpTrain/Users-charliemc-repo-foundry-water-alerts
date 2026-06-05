@@ -513,6 +513,20 @@ hr.heavy {
   </tbody>
 </table>
 
+<h3>Existing Remote Access — Hik-Connect (configured by resident Nick)</h3>
+<table class="no-break">
+  <tbody>
+    <tr><td>App</td><td>Hik-Connect for End User (iOS / Android — confirmed from App Store screenshot)</td></tr>
+    <tr><td>Register Mode</td><td>IP/Domain — connects via DDNS hostname with port forwarding</td></tr>
+    <tr class="hl"><td>Alias</td><td>Foundry70</td></tr>
+    <tr class="hl"><td>Address</td><td>foundry70.redirectme.net</td></tr>
+    <tr class="hl"><td>Port</td><td>8000</td></tr>
+    <tr class="hl"><td>Username</td><td>admin</td></tr>
+    <tr><td>Camera No.</td><td>17 (channels accessible via app)</td></tr>
+    <tr><td>Ownership</td><td>Account set up and controlled by Nick (resident) — board does not currently hold these credentials. Obtain from Nick or perform DDNS/port-forward reconfiguration to transfer ownership.</td></tr>
+  </tbody>
+</table>
+
 <h3>Display &amp; Network</h3>
 <table class="no-break">
   <tbody>
@@ -579,7 +593,7 @@ hr.heavy {
   <tbody>
     <tr><td>Firmware</td><td>Hikvision embedded Linux — version unknown (DVR currently locked)</td></tr>
     <tr><td>Admin Account</td><td>Username: admin / Password: Foundry1 — SADP unlock required first</td></tr>
-    <tr><td>Remote Access</td><td>Hikvision iVMS-4200 (PC) or Hik-Connect (mobile) — not yet configured</td></tr>
+    <tr><td>Remote Access</td><td>Hik-Connect already configured by resident Nick — Alias: Foundry70, foundry70.redirectme.net:8000. Board needs to obtain credentials from Nick.</td></tr>
   </tbody>
 </table>
 
@@ -612,6 +626,20 @@ hr.heavy {
     <tr><td>Power</td><td>CyberPower 450VA UPS (confirmed from photos)</td></tr>
     <tr class="hl"><td>Admin Password</td><td>Foundry1 &nbsp;(DVR is accessible — not locked)</td></tr>
     <tr><td>Condition</td><td>Powered on and operational; live camera feed confirmed on monitor</td></tr>
+  </tbody>
+</table>
+
+<h3>Existing Remote Access — Hik-Connect (configured by resident Nick)</h3>
+<table class="no-break">
+  <tbody>
+    <tr><td>App</td><td>Hik-Connect for End User (iOS / Android — confirmed from App Store screenshot)</td></tr>
+    <tr><td>Register Mode</td><td>IP/Domain — connects via DDNS hostname with port forwarding</td></tr>
+    <tr class="hl"><td>Alias</td><td>Foundry44</td></tr>
+    <tr class="hl"><td>Address</td><td>foundry44.redirectme.net</td></tr>
+    <tr class="hl"><td>Port</td><td>8001</td></tr>
+    <tr class="hl"><td>Username</td><td>admin</td></tr>
+    <tr><td>Camera No.</td><td>33 (channels accessible via app)</td></tr>
+    <tr><td>Ownership</td><td>Account set up and controlled by Nick (resident) — board does not currently hold these credentials. Obtain from Nick or reconfigure to transfer ownership to the board.</td></tr>
   </tbody>
 </table>
 
@@ -677,7 +705,7 @@ hr.heavy {
     <tr><td>Firmware</td><td>Hikvision embedded Linux — version not yet confirmed (check Maintenance menu after login)</td></tr>
     <tr><td>Admin Account</td><td>admin / Foundry1 — DVR accessible, no reset required</td></tr>
     <tr><td>Recording</td><td>Active and confirmed; playback timeline visible in photos (verify gap around March 2026)</td></tr>
-    <tr><td>Remote Access</td><td>iVMS-4200 / Hik-Connect compatible — not yet configured</td></tr>
+    <tr><td>Remote Access</td><td>Hik-Connect already configured by resident Nick — Alias: Foundry44, foundry44.redirectme.net:8001. Board needs to obtain credentials from Nick.</td></tr>
   </tbody>
 </table>
 
@@ -715,7 +743,8 @@ hr.heavy {
     <tr><td>Active Channels</td><td>~30+ (all operational at time of inspection)</td></tr>
     <tr><td>Input Power</td><td>100V–240V~, 50/60Hz, 2A, 70W Max (confirmed from label)</td></tr>
     <tr><td>Front LEDs (lit)</td><td>READY (blue), STATUS (blue), Tx/Rx (blue), GUARD (blue) — HDD dim/off; ALARM off</td></tr>
-    <tr class="hl"><td>Password Protection</td><td>DISABLED — "Enable Password" unchecked in System &gt; General. Must be set immediately.</td></tr>
+    <tr class="hl"><td>Admin Password</td><td>UNKNOWN — not provided; not Foundry1. Check with the technician or installer who set up Phase 3, or perform a factory reset via Maintenance &gt; Default.</td></tr>
+    <tr class="hl"><td>Password Protection</td><td>DISABLED — "Enable Password" unchecked in System &gt; General. Set a new password immediately once admin access is confirmed.</td></tr>
     <tr><td>Auto Logout</td><td>Never (default)</td></tr>
   </tbody>
 </table>
@@ -729,7 +758,7 @@ hr.heavy {
     <tr><td>HDMI1 / VGA1 Resolution</td><td>1024×768 @ 60Hz — recommend updating to 1920×1080</td></tr>
     <tr><td>HDMI2 / VGA2 Resolution</td><td>1024×768 @ 60Hz — recommend updating to 1920×1080</td></tr>
     <tr><td>DST</td><td>Apr 1st Sun 2:00 → Oct last Sun 2:00, +60 min (correct for Eastern)</td></tr>
-    <tr><td>Remote Access</td><td>Not configured — no Hik-Connect, iVMS-4200, or DDNS set up</td></tr>
+    <tr><td>Remote Access</td><td>Not configured — no Hik-Connect, DDNS, or remote app set up (unlike Phase 1 &amp; 2 which use Nick's Hik-Connect account)</td></tr>
     <tr><td>IoT / Business Apps</td><td>Access Control + Alarm Linkage modules available in firmware; not confirmed active</td></tr>
   </tbody>
 </table>
@@ -759,12 +788,13 @@ hr.heavy {
 
 <h3>Known Issues — Phase 3</h3>
 <ul class="issues">
-  <li class="crit" data-n="1"><strong>Password protection is OFF</strong> — System &gt; General &gt; check "Enable Password" → set Foundry1 immediately. Any device on the building LAN has full NVR admin access right now.</li>
-  <li class="crit" data-n="2"><strong>No remote viewing configured</strong> — Hik-Connect / iVMS-4200 / DDNS not set up. NVR is invisible outside the building LAN. Configure via Network &gt; Platform Access.</li>
-  <li data-n="3"><strong>Storage unverified</strong> — HDD LED dim at inspection. Check Maintenance &gt; HDD. With 30+ cameras, a 4TB drive fills in ~2–3 weeks. Add Seagate SkyHawk 8TB (~$130) if capacity is low.</li>
-  <li data-n="4"><strong>Firmware 4 years old</strong> — V4.61.000 Build 220809 (Aug 2022). Check Maintenance &gt; Upgrade for V4.7x+ security patches.</li>
-  <li data-n="5"><strong>Display at 1024×768</strong> — Both HDMI outputs are sub-HD. Change to 1920×1080 via System &gt; General.</li>
-  <li data-n="6"><strong>Device name is default</strong> — Rename to "Foundry Phase 3 NVR" via System &gt; General &gt; Device Name.</li>
+  <li class="crit" data-n="1"><strong>Admin password unknown</strong> — Password is not Foundry1. Contact the Phase 3 installer or technician. If unavailable, perform factory reset: Maintenance &gt; Default, then set a new admin password immediately.</li>
+  <li class="crit" data-n="2"><strong>Password protection is OFF</strong> — System &gt; General shows "Enable Password" unchecked. Once admin access is confirmed, enable password protection immediately — any LAN device currently has full access.</li>
+  <li class="crit" data-n="3"><strong>No remote viewing configured</strong> — Unlike Phase 1 &amp; 2 (which have Hik-Connect via Nick's redirectme.net DDNS), Phase 3 has no remote app or DDNS set up. Configure via Network &gt; Platform Access once admin access is confirmed.</li>
+  <li data-n="4"><strong>Storage unverified</strong> — HDD LED dim at inspection. Check Maintenance &gt; HDD. With 30+ cameras, a 4TB drive fills in ~2–3 weeks. Add Seagate SkyHawk 8TB (~$130) if capacity is low.</li>
+  <li data-n="5"><strong>Firmware 4 years old</strong> — V4.61.000 Build 220809 (Aug 2022). Check Maintenance &gt; Upgrade for V4.7x+ security patches.</li>
+  <li data-n="6"><strong>Display at 1024×768</strong> — Both HDMI outputs are sub-HD. Change to 1920×1080 via System &gt; General.</li>
+  <li data-n="7"><strong>Device name is default</strong> — Rename to "Foundry Phase 3 NVR" via System &gt; General &gt; Device Name.</li>
 </ul>
 
 <hr class="heavy">
@@ -788,8 +818,8 @@ hr.heavy {
     <tr><td>Monitor</td><td>TCL ~32" via VGA</td><td>TCL ~32" via HDMI</td><td>TCL ~45" via HDMI</td></tr>
     <tr><td>UPS / Power</td><td>APC-style surge strip</td><td>CyberPower 450VA</td><td>CyberPower (larger)</td></tr>
     <tr><td>Network Backhaul</td><td>EnGenius EnStation (ext.)</td><td>EnGenius EnStation (ext.)</td><td>GreenNet PoE switch (int.)</td></tr>
-    <tr><td>Remote Access</td><td>Not available (locked)</td><td>Possible — not confirmed</td><td>Not configured</td></tr>
-    <tr><td>Password</td><td>Foundry1 (needs SADP)</td><td>Foundry1 (accessible)</td><td>DISABLED — set now</td></tr>
+    <tr><td>Remote Access</td><td>Hik-Connect via foundry70.redirectme.net:8000 — Nick's account</td><td>Hik-Connect via foundry44.redirectme.net:8001 — Nick's account</td><td>Not configured</td></tr>
+    <tr><td>Password</td><td>Foundry1 (needs SADP unlock)</td><td>Foundry1 (accessible now)</td><td>UNKNOWN — not Foundry1</td></tr>
     <tr><td>Overall Condition</td><td>Poor — 14 cameras down</td><td>Fair — 3 cameras down</td><td>Good — config needed</td></tr>
   </tbody>
 </table>
@@ -824,8 +854,9 @@ hr.heavy {
 
 <p class="ck-head">Phase 3 — Priority Actions</p>
 <ul class="ck">
-  <li><strong>Enable password now:</strong> System &gt; General &gt; check "Enable Password" → set Foundry1 or stronger</li>
-  <li>Set up remote access: Network &gt; Platform Access &gt; enable Hik-Connect</li>
+  <li><strong>Confirm or reset admin password</strong> — password is unknown; contact Phase 3 installer or use Maintenance &gt; Default factory reset, then set a strong password</li>
+  <li><strong>Enable password protection:</strong> System &gt; General &gt; check "Enable Password" once admin access is confirmed</li>
+  <li>Set up remote access: Network &gt; Platform Access &gt; enable Hik-Connect (once password is set)</li>
   <li>Check HDD: Maintenance &gt; HDD — verify capacity, free space, drive health; add 8TB SkyHawk if needed</li>
   <li>Update firmware: Maintenance &gt; Upgrade — check for V4.7x+ updates</li>
   <li>Change both HDMI outputs to 1920×1080 via System &gt; General</li>
@@ -861,22 +892,22 @@ hr.heavy {
 
       <div class="p-item">
         <div class="p-num">3</div>
-        <div class="p-body"><strong>Unified viewing — iVMS-4200 (free)</strong>
-          All three units speak Hikvision protocol. Install iVMS-4200 (free, Windows/Mac) on one PC and add all three recorders. Single dashboard — live view, playback, and export across all phases. No subscription, no cost.
+        <div class="p-body"><strong>Get Hik-Connect credentials from Nick</strong>
+          Phase 1 (Foundry70) and Phase 2 (Foundry44) are already live on Hik-Connect via redirectme.net DDNS — set up by resident Nick. The board does not currently hold these app credentials. Contact Nick to obtain the Hik-Connect account login, or reconfigure the DDNS and port-forwarding to a board-owned account.
         </div>
       </div>
 
       <div class="p-item">
         <div class="p-num">4</div>
-        <div class="p-body"><strong>Mobile app — Hik-Connect (free)</strong>
-          Register all three recorders on Hik-Connect (free iOS/Android app). Board members get live remote viewing and motion alerts from anywhere. No port forwarding or static IP required. Fastest path to remote access for the whole building.
+        <div class="p-body"><strong>Add Phase 3 to Hik-Connect</strong>
+          Phase 3 NVR has no remote access configured. Once admin password is confirmed (or reset), go to Network &gt; Platform Access &gt; enable Hik-Connect. No port forwarding required — the NVR will register to the cloud automatically.
         </div>
       </div>
 
       <div class="p-item">
         <div class="p-num">5</div>
-        <div class="p-body"><strong>Rename Phase 2 channels</strong>
-          Channels A3, A5–A7, A13–A15 are partially legible. Log in with Foundry1 and rename from the Channel Config menu. 10-minute task.
+        <div class="p-body"><strong>iVMS-4200 for on-site unified view</strong>
+          Install iVMS-4200 (free, Windows/Mac) on one PC at the building and add all three recorders. Single dashboard for all cameras across all phases — live view, playback, export. Works alongside Hik-Connect mobile. No subscription.
         </div>
       </div>
     </div>
