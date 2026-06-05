@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Camera & AV System Inventory — The Lofts at The Foundry</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+
+/* ── Reset ──────────────────────────────────────── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cream:   #faf6ef;
+  --tan:     #c9a86c;
+  --tan-lt:  #e8d8b8;
+  --tan-dk:  #7a5c2e;
+  --ink:     #1e1510;
+  --ink-mid: #4a3828;
+  --ink-lt:  #8a7460;
+  --rule:    #ddd0b8;
+}
+
+/* ── Page / body ────────────────────────────────── */
+@page {
+  size: letter portrait;
+  margin: 0.7in 0.7in 0.75in 0.7in;
+}
+
+html { background: #ede8df; }
+
+body {
+  font-family: 'Lato', sans-serif;
+  font-size: 9pt;
+  color: var(--ink);
+  line-height: 1.55;
+  background: var(--cream);
+  max-width: 7.5in;
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* ── Cover header ───────────────────────────────── */
+.cover {
+  background: var(--ink);
+  padding: 28pt 36pt 22pt;
+  display: flex;
+  align-items: center;
+  gap: 28pt;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.cover-logo { flex-shrink: 0; }
+
+.cover-text {
+  border-left: 1px solid rgba(201,168,108,0.3);
+  padding-left: 24pt;
+}
+
+.cover-text h1 {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 17pt;
+  font-weight: 300;
+  color: #f5ede0;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  margin-bottom: 7pt;
+}
+
+.cover-text p {
+  font-size: 7.5pt;
+  font-weight: 300;
+  color: var(--tan);
+  letter-spacing: 0.1em;
+  line-height: 1.9;
+}
+
+/* ── Status strip ───────────────────────────────── */
+.status-strip {
+  background: #2a1f13;
+  display: flex;
+  border-top: 1px solid rgba(201,168,108,0.15);
+  padding: 10pt 36pt;
+  gap: 0;
+}
+
+.stat {
+  flex: 1;
+  text-align: center;
+  padding: 0 8pt;
+  border-right: 1px solid rgba(201,168,108,0.12);
+}
+.stat:last-child { border-right: none; }
+
+.stat .n {
+  display: block;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 20pt;
+  font-weight: 400;
+  color: var(--tan);
+  line-height: 1;
+  margin-bottom: 2pt;
+}
+.stat .n.warn { color: #e0845a; }
+.stat .n.ok   { color: #82b87a; }
+.stat .l {
+  display: block;
+  font-size: 6pt;
+  color: rgba(201,168,108,0.55);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ── Body wrapper ───────────────────────────────── */
+.body { padding: 22pt 36pt 28pt; }
+
+/* ── Section header ─────────────────────────────── */
+.sec {
+  display: flex;
+  align-items: center;
+  gap: 9pt;
+  margin: 22pt 0 10pt;
+  break-after: avoid;
+  page-break-after: avoid;
+}
+.sec:first-child { margin-top: 0; }
+
+.sec-badge {
+  background: var(--ink);
+  color: var(--tan);
+  font-size: 6pt;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 2.5pt 7pt;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sec h2 {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 14pt;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+}
+
+.sec .r { flex: 1; height: 1px; background: var(--rule); }
+
+.pill {
+  font-size: 6.5pt;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: 2pt 7pt;
+  border-radius: 2pt;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.pill-bad  { background: #fdeee6; color: #b03818; border: 1px solid #e07050; }
+.pill-mid  { background: #fef9ec; color: #7a5a18; border: 1px solid #caa040; }
+.pill-good { background: #eef6ec; color: #2a6a24; border: 1px solid #72aa6a; }
+.pill-crit { background: #fde4dc; color: #9a2010; border: 1px solid #cc3820; }
+
+/* ── Sub-headers ────────────────────────────────── */
+h3 {
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tan-dk);
+  margin: 14pt 0 5pt;
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+h4 {
+  font-size: 7pt;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-mid);
+  margin: 10pt 0 4pt;
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+/* ── Tables ─────────────────────────────────────── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 8.5pt;
+  margin-bottom: 8pt;
+}
+
+/* Avoid breaking small tables across pages */
+table.no-break {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+thead th {
+  background: var(--ink);
+  color: var(--tan);
+  font-size: 6.5pt;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  padding: 5pt 8pt;
+  text-align: left;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+tbody tr:nth-child(even) {
+  background: #f2ece0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+tbody tr:nth-child(odd) { background: var(--cream); }
+
+tbody td {
+  padding: 4pt 8pt;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+  line-height: 1.45;
+}
+
+tbody td:first-child {
+  font-weight: 700;
+  color: var(--ink-mid);
+  width: 30%;
+  white-space: nowrap;
+}
+
+tr.hl td {
+  background: #fff7e8 !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+tr.hl td:first-child { color: var(--tan-dk); }
+
+/* Channel list — wider name column */
+.ch-tbl tbody td:first-child { width: 12%; white-space: nowrap; }
+.ch-tbl tbody td:nth-child(2) { width: 42%; }
+
+/* Summary table — equal cols */
+.sum-tbl tbody td:first-child { width: 18%; white-space: normal; }
+
+/* ── Issue list ─────────────────────────────────── */
+.issues { list-style: none; margin-bottom: 8pt; }
+.issues li {
+  font-size: 8.5pt;
+  padding: 4.5pt 8pt 4.5pt 20pt;
+  margin-bottom: 3pt;
+  position: relative;
+  border-left: 3px solid var(--tan-lt);
+  background: #f8f4ec;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.issues li.crit {
+  border-left-color: #cc3820;
+  background: #fff2ee;
+}
+.issues li::before {
+  content: attr(data-n);
+  position: absolute;
+  left: 6pt;
+  top: 5pt;
+  font-size: 6.5pt;
+  font-weight: 700;
+  color: var(--tan-dk);
+}
+.issues li.crit::before { color: #cc3820; }
+
+/* ── Divider ────────────────────────────────────── */
+hr {
+  border: none;
+  border-top: 1px solid var(--rule);
+  margin: 16pt 0;
+}
+hr.heavy {
+  border-top: 2px solid var(--tan-lt);
+  margin: 22pt 0;
+}
+
+/* ── Checklist ──────────────────────────────────── */
+.ck-head {
+  font-size: 6.5pt;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tan-dk);
+  margin: 12pt 0 5pt;
+}
+.ck { list-style: none; }
+.ck li {
+  font-size: 8.5pt;
+  padding: 3.5pt 0 3.5pt 17pt;
+  position: relative;
+  border-bottom: 1px solid var(--rule);
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.ck li::before {
+  content: "☐";
+  position: absolute;
+  left: 0;
+  top: 3pt;
+  font-size: 9pt;
+  color: var(--tan-lt);
+}
+
+/* ── Priority panel ─────────────────────────────── */
+.priority {
+  background: var(--ink);
+  padding: 22pt 36pt 26pt;
+  margin-top: 0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.priority h2 {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 15pt;
+  font-weight: 300;
+  color: #f2e8d8;
+  letter-spacing: 0.05em;
+  margin-bottom: 5pt;
+}
+.priority .deck {
+  font-size: 8.5pt;
+  color: var(--tan);
+  font-style: italic;
+  line-height: 1.6;
+  margin-bottom: 16pt;
+  max-width: 90%;
+}
+
+.p-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18pt;
+}
+
+.p-col-head {
+  font-size: 6.5pt;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding-bottom: 5pt;
+  margin-bottom: 10pt;
+  border-bottom: 1px solid rgba(201,168,108,0.2);
+}
+.p-col-head.free  { color: var(--tan); }
+.p-col-head.cost  { color: #82b87a; }
+
+.p-item {
+  display: flex;
+  gap: 7pt;
+  margin-bottom: 9pt;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.p-num {
+  flex-shrink: 0;
+  width: 15pt;
+  height: 15pt;
+  border: 1px solid rgba(201,168,108,0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 6.5pt;
+  font-weight: 700;
+  color: var(--tan);
+  margin-top: 1pt;
+}
+.p-item.cost .p-num { color: #82b87a; border-color: rgba(130,184,122,0.3); }
+
+.p-body { font-size: 8pt; color: #ddd0bc; line-height: 1.5; }
+.p-body strong { display: block; color: #f2e8d8; font-size: 8pt; margin-bottom: 2pt; }
+
+.arch {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201,168,108,0.18);
+  padding: 10pt 14pt;
+  margin-top: 10pt;
+  font-size: 7.5pt;
+  color: var(--tan);
+  line-height: 1.9;
+  font-family: 'Lato', monospace;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.arch-lbl {
+  font-size: 6pt;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(201,168,108,0.45);
+  display: block;
+  margin-bottom: 6pt;
+}
+
+/* ── Footer ─────────────────────────────────────── */
+.doc-footer {
+  background: var(--ink);
+  padding: 9pt 36pt;
+  display: flex;
+  justify-content: space-between;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.doc-footer span { font-size: 7pt; color: rgba(201,168,108,0.45); letter-spacing: 0.08em; }
+
+/* ── Print overrides ────────────────────────────── */
+@media print {
+  html { background: white; }
+  body { max-width: none; }
+
+  .cover, .status-strip, .priority, .doc-footer,
+  thead th, tbody tr:nth-child(even),
+  .issues li, tr.hl td {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Page breaks */
+  .cover    { page-break-after: avoid; }
+  .sec      { page-break-after: avoid; break-after: avoid; }
+  h3, h4    { page-break-after: avoid; break-after: avoid; }
+  .priority { page-break-before: always; break-before: page; }
+  hr.heavy  { page-break-after: avoid; break-after: avoid; }
+
+  /* Tables: avoid break on small ones; allow on long ones */
+  table.no-break { page-break-inside: avoid; break-inside: avoid; }
+  tr { page-break-inside: avoid; break-inside: avoid; }
+
+  .p-item { page-break-inside: avoid; break-inside: avoid; }
+  .issues li { page-break-inside: avoid; break-inside: avoid; }
+  .ck li { page-break-inside: avoid; break-inside: avoid; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-logo">
+    <!-- The Lofts at The Foundry logo — SVG recreation -->
+    <svg width="120" height="84" viewBox="0 0 120 84" xmlns="http://www.w3.org/2000/svg">
+      <text x="60" y="13" text-anchor="middle"
+        font-family="'Cormorant Garamond',Georgia,serif"
+        font-size="8.5" font-weight="300" letter-spacing="4.5"
+        fill="#c9a86c">THE</text>
+      <line x1="10" y1="18" x2="110" y2="18" stroke="#c9a86c" stroke-width="0.4" opacity="0.45"/>
+      <text x="60" y="60" text-anchor="middle"
+        font-family="'Cormorant Garamond',Georgia,serif"
+        font-size="44" font-weight="300" font-style="italic"
+        letter-spacing="-1" fill="#c9a86c">lofts</text>
+      <line x1="10" y1="66" x2="110" y2="66" stroke="#c9a86c" stroke-width="0.4" opacity="0.45"/>
+      <text x="60" y="79" text-anchor="middle"
+        font-family="'Cormorant Garamond',Georgia,serif"
+        font-size="7" font-weight="300" letter-spacing="3.2"
+        fill="#c9a86c">AT THE FOUNDRY</text>
+    </svg>
+  </div>
+  <div class="cover-text">
+    <h1>Camera &amp; AV System Inventory</h1>
+    <p>
+      225 South Plank Road, Newburgh NY 12550<br>
+      Inventory Date: June 5, 2026 &nbsp;·&nbsp; Prepared by: ICOM Solutions<br>
+      For: Incoming Technician Handoff &nbsp;·&nbsp; Three-Phase CCTV System
+    </p>
+  </div>
+</div>
+
+<!-- STATUS STRIP -->
+<div class="status-strip">
+  <div class="stat"><span class="n">3</span><span class="l">Phases</span></div>
+  <div class="stat"><span class="n">~64</span><span class="l">Camera Positions</span></div>
+  <div class="stat"><span class="n warn">17</span><span class="l">Cameras Offline</span></div>
+  <div class="stat"><span class="n ok">~47</span><span class="l">Cameras Operational</span></div>
+  <div class="stat"><span class="n">~$100</span><span class="l">Est. Restore Cost</span></div>
+</div>
+
+<!-- BODY -->
+<div class="body">
+
+<!-- ════════════════════════════════════════ PHASE 1 -->
+<div class="sec">
+  <div class="sec-badge">Phase 1</div>
+  <h2>DVR System — Analog / HD-CVI</h2>
+  <div class="r"></div>
+  <span class="pill pill-bad">14 of 18 Offline</span>
+</div>
+
+<h3>DVR Unit</h3>
+<table class="no-break">
+  <tbody>
+    <tr><td>Brand / Type</td><td>Hikvision — Analog / HD-CVI Digital Video Recorder</td></tr>
+    <tr><td>Likely Model</td><td>DS-7300 series (DS-7316HWI-SH or similar), 16–18 channel</td></tr>
+    <tr><td>Front I/O</td><td>2× USB-A, optical/DVD disc slot</td></tr>
+    <tr><td>Rear I/O</td><td>16–18× BNC camera inputs, audio RCA in/out, HDMI out, VGA out, RJ45, alarm terminals, RS-485</td></tr>
+    <tr><td>Power</td><td>APC-style surge strip; IEC C13 connection</td></tr>
+    <tr class="hl"><td>Admin Password</td><td>Foundry1 &nbsp;(requires SADP unlock or physical reset first — DVR is currently locked)</td></tr>
+    <tr><td>Condition</td><td>Powered on; POWER + READY LEDs lit. DVR locked — use Hikvision SADP tool (free) or physical reset button to restore access before login.</td></tr>
+  </tbody>
+</table>
+
+<h3>Display &amp; Network</h3>
+<table class="no-break">
+  <tbody>
+    <tr><td>Monitor</td><td>TCL Roku TV ~32" — connected via VGA (HDMI port is unused on DVR rear; swap recommended)</td></tr>
+    <tr><td>Network Switch</td><td>TRENDnet unmanaged 5–8 port desktop switch at floor cable junction</td></tr>
+    <tr><td>Wireless Bridge</td><td>EnGenius EnStation outdoor CPE — exterior brick wall at roofline; PoE via white CAT cable through conduit</td></tr>
+  </tbody>
+</table>
+
+<h3>Cabling</h3>
+<table class="no-break">
+  <tbody>
+    <tr><td>Camera Runs</td><td>RG59 BNC coaxial — white and black jacketed; 14–18 individual runs</td></tr>
+    <tr><td>Interior Routing</td><td>Ceiling/attic void; metal hat-channel framing; cable-tied bundles</td></tr>
+    <tr><td>Grade-Level Routing</td><td>Metal EMT conduit along floor / exterior grade into building</td></tr>
+    <tr><td>Network</td><td>CAT5/6: DVR → TRENDnet switch → EnGenius EnStation (PoE)</td></tr>
+  </tbody>
+</table>
+
+<h3>Camera Endpoints</h3>
+<table class="no-break">
+  <tbody>
+    <tr><td>Total Slots</td><td>18</td></tr>
+    <tr><td>Operational</td><td>4 — hallway / elevator area based on DVR preview</td></tr>
+    <tr><td>Offline (NO VIDEO)</td><td>14 — no signal at DVR</td></tr>
+    <tr><td>Connection</td><td>Analog / HD-CVI, BNC coaxial; 12VDC siamese coax or PoC power</td></tr>
+  </tbody>
+</table>
+
+<h4>Type A — Indoor White Dome (ceiling corner, hallways/lobby)</h4>
+<table class="no-break">
+  <tbody>
+    <tr><td>Housing</td><td>White small dome/eyeball; ~2.8mm or 3.6mm fixed wide-angle lens; ceiling corner mount</td></tr>
+    <tr><td>Typical Model</td><td>Hikvision DS-2CE56D0T-IRPF or equivalent analog/HD-CVI mini dome</td></tr>
+  </tbody>
+</table>
+
+<h4>Type B — Outdoor Black Bullet (exterior soffit, parking/alley)</h4>
+<table class="no-break">
+  <tbody>
+    <tr><td>Housing</td><td>Black bullet/cylindrical; varifocal or telephoto lens; surface-mount junction box; exterior brick under soffit</td></tr>
+    <tr><td>Typical Model</td><td>Hikvision DS-2CE16D0T-EXIF or equivalent analog/HD-TVI outdoor bullet</td></tr>
+  </tbody>
+</table>
+
+<h4>Type C — Outdoor Black Mini Dome (exterior soffit, entries)</h4>
+<table class="no-break">
+  <tbody>
+    <tr><td>Housing</td><td>Black compact dome/turret; short fixed wide-angle lens; exterior brick under soffit</td></tr>
+    <tr><td>Typical Model</td><td>Hikvision DS-2CE56D0T-IRMMF or equivalent analog/HD-CVI mini dome</td></tr>
+  </tbody>
+</table>
+
+<h4>Type D — Cylindrical Conduit-Mounted Device (identity unconfirmed)</h4>
+<table class="no-break">
+  <tbody>
+    <tr><td>Housing</td><td>Silver/bare metal cylinder ~3" — clamped directly to EMT conduit run; label present but not legible in photos</td></tr>
+    <tr><td>Action</td><td>Photograph label at close range to confirm whether PIR motion detector or covert pinhole camera</td></tr>
+  </tbody>
+</table>
+
+<h3>Software / Firmware</h3>
+<table class="no-break">
+  <tbody>
+    <tr><td>Firmware</td><td>Hikvision embedded Linux — version unknown (DVR currently locked)</td></tr>
+    <tr><td>Admin Account</td><td>Username: admin / Password: Foundry1 — SADP unlock required first</td></tr>
+    <tr><td>Remote Access</td><td>Hikvision iVMS-4200 (PC) or Hik-Connect (mobile) — not yet configured</td></tr>
+  </tbody>
+</table>
+
+<h3>Known Issues — Phase 1</h3>
+<ul class="issues">
+  <li class="crit" data-n="1"><strong>DVR locked</strong> — Run Hikvision SADP tool (free, any PC on same LAN) to reset password. Then login: admin / Foundry1.</li>
+  <li data-n="2"><strong>14 of 18 cameras offline</strong> — Check BNC connectors at DVR rear first. Test each dead run with a spare camera before ordering any replacements.</li>
+  <li data-n="3"><strong>Cabling exposed at grade</strong> — Conduit bundle at floor/grade with unsecured sections; weather and foot-traffic risk.</li>
+  <li data-n="4"><strong>Masonry cracking at EnStation mount</strong> — Brick/mortar cracks visible at wireless bridge mount location; flag to board for masonry inspection.</li>
+  <li data-n="5"><strong>VGA connection to monitor</strong> — HDMI port is on DVR rear and unused. Swap the cable for a cleaner signal at no cost.</li>
+</ul>
+
+<hr class="heavy">
+
+<!-- ════════════════════════════════════════ PHASE 2 -->
+<div class="sec">
+  <div class="sec-badge">Phase 2</div>
+  <h2>Hybrid DVR System — Analog + IP Slots</h2>
+  <div class="r"></div>
+  <span class="pill pill-mid">3 of 16 Offline</span>
+</div>
+
+<h3>DVR Unit</h3>
+<table class="no-break">
+  <tbody>
+    <tr><td>Brand / Type</td><td>Hikvision — Hybrid DVR (analog/HD-CVI A-channels + IP D-channels)</td></tr>
+    <tr><td>Likely Model</td><td>DS-7300 Hybrid series (DS-7316HGHI-SH or similar)</td></tr>
+    <tr><td>Channel Capacity</td><td>16 analog (A1–A16) + 8–9 IP channels (D1–D9)</td></tr>
+    <tr><td>Rear I/O</td><td>16× BNC analog inputs, HDMI, VGA, RJ45, audio RCA, RS-485, alarm terminals</td></tr>
+    <tr><td>Power</td><td>CyberPower 450VA UPS (confirmed from photos)</td></tr>
+    <tr class="hl"><td>Admin Password</td><td>Foundry1 &nbsp;(DVR is accessible — not locked)</td></tr>
+    <tr><td>Condition</td><td>Powered on and operational; live camera feed confirmed on monitor</td></tr>
+  </tbody>
+</table>
+
+<h3>Named Camera Channels (read from monitor sidebar)</h3>
+<table class="ch-tbl">
+  <thead>
+    <tr><th>Channel</th><th>Name</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>A1</td><td>bld front</td><td></td></tr>
+    <tr><td>A2</td><td>lobby</td><td></td></tr>
+    <tr><td>A3</td><td>(partially legible)</td><td>Rename needed</td></tr>
+    <tr><td>A4</td><td>2 laundry</td><td></td></tr>
+    <tr><td>A5–A7</td><td>(partially legible)</td><td>Rename needed</td></tr>
+    <tr><td>A8</td><td>4 laundry</td><td></td></tr>
+    <tr><td>A9</td><td>edward lobby</td><td></td></tr>
+    <tr><td>A10</td><td>edward-1st fl view</td><td></td></tr>
+    <tr><td>A11</td><td>road conf / road corner</td><td></td></tr>
+    <tr><td>A12</td><td>1st in hall to court</td><td></td></tr>
+    <tr><td>A13–A15</td><td>(partially legible)</td><td>Rename needed</td></tr>
+    <tr><td>A16</td><td>edward street</td><td></td></tr>
+    <tr><td>D1–D9</td><td>IPCamera 0 (default)</td><td>Unconfigured IP slots — verify if in use or available for future expansion</td></tr>
+  </tbody>
+</table>
+
+<h3>Display, Network &amp; Power</h3>
+<table class="no-break">
+  <tbody>
+    <tr><td>Monitor</td><td>TCL Roku TV ~32" — HDMI connection, crisp image confirmed</td></tr>
+    <tr><td>Camera Power Board</td><td>Wall-mounted multi-output 12VDC distribution board; per-channel red LEDs; open-face metal enclosure adjacent to DVR</td></tr>
+    <tr><td>Wireless Bridge</td><td>EnGenius EnStation outdoor CPE — exterior painted brick wall near downspout</td></tr>
+    <tr><td>Network Switch</td><td>Gray unmanaged 8+ port switch (brand TBD) — telecom closet</td></tr>
+    <tr><td>ISP Demarc</td><td>Verizon / Bell Atlantic FIOS enclosure — large green metal panel, building telecom closet, labeled "Bell Atlantic access only"</td></tr>
+    <tr><td>ISP Device</td><td>Verizon ONT or router (black Verizon-branded) alongside demarc</td></tr>
+    <tr><td>UPS</td><td>CyberPower 450VA (confirmed); older white 6-outlet surge strip for secondary devices</td></tr>
+  </tbody>
+</table>
+
+<h3>Spare Equipment On-Hand (Phase 2 desk)</h3>
+<table class="no-break">
+  <tbody>
+    <tr><td>Spare Cameras</td><td>2× black mini dome/turret (Type C) — new in anti-static bags; use for Phase 1 bench testing before ordering replacements</td></tr>
+    <tr><td>Cable Spools</td><td>1× black RG59/RG6 pre-spooled (~50–100 ft) with BNC; 1 spool red/white siamese coax+power cable</td></tr>
+    <tr><td>Hardware / Docs</td><td>Camera mounting brackets and installation manual in bag</td></tr>
+  </tbody>
+</table>
+
+<h3>Building Telecom / Utility Room</h3>
+<table class="no-break">
+  <tbody>
+    <tr><td>Room Type</td><td>Building meter room / main telecom termination point</td></tr>
+    <tr><td>Electric Meters</td><td>Bank of individual unit meters — unit numbers 101, 103, 107, 109+ visible</td></tr>
+    <tr><td>Cable Distribution Box</td><td>Central open junction box — large tangled mass of CAT5/6 and coax; unsecured, unlabeled, exposed</td></tr>
+    <tr><td>Other Devices</td><td>Motorola signal amplifier/gateway (older); possible alarm or access control panel component below it</td></tr>
+    <tr><td>Conduit</td><td>Large 3" gray EMT sweeps along ceiling — main building infrastructure</td></tr>
+    <tr><td>Condition</td><td>POOR — cable distribution box is a fire/safety hazard; professional remediation required independent of camera work</td></tr>
+  </tbody>
+</table>
+
+<h3>Software / Firmware</h3>
+<table class="no-break">
+  <tbody>
+    <tr><td>Firmware</td><td>Hikvision embedded Linux — version not yet confirmed (check Maintenance menu after login)</td></tr>
+    <tr><td>Admin Account</td><td>admin / Foundry1 — DVR accessible, no reset required</td></tr>
+    <tr><td>Recording</td><td>Active and confirmed; playback timeline visible in photos (verify gap around March 2026)</td></tr>
+    <tr><td>Remote Access</td><td>iVMS-4200 / Hik-Connect compatible — not yet configured</td></tr>
+  </tbody>
+</table>
+
+<h3>Known Issues — Phase 2</h3>
+<ul class="issues">
+  <li data-n="1"><strong>3 cameras offline</strong> — Check power distribution board fuses per channel first, then BNC connectors, then coax continuity.</li>
+  <li data-n="2"><strong>Incomplete channel names</strong> — A3, A5–A7, A13–A15 need renaming via DVR Channel Config menu (10-minute task).</li>
+  <li data-n="3"><strong>D1–D9 IP slots unconfigured</strong> — Confirm via DVR network camera menu whether unused or connected-but-unconfigured.</li>
+  <li class="crit" data-n="4"><strong>Meter room cable box is a safety hazard</strong> — Tangled, unsecured, exposed wiring; requires professional cable remediation independent of camera work.</li>
+  <li data-n="5"><strong>EnStation mount cracking</strong> — Same brick/mortar cracking concern as Phase 1; verify weatherproofing at Ethernet entry point.</li>
+  <li data-n="6"><strong>Recording timeline gap</strong> — Playback shows last footage ~March 2026. Verify HDD status and recording schedule.</li>
+</ul>
+
+<hr class="heavy">
+
+<!-- ════════════════════════════════════════ PHASE 3 -->
+<div class="sec">
+  <div class="sec-badge">Phase 3</div>
+  <h2>NVR System — Full IP / PoE (Confirmed Model)</h2>
+  <div class="r"></div>
+  <span class="pill pill-good">All Cameras Operational</span>
+</div>
+
+<h3>NVR Unit — Confirmed from Device Label &amp; System Info Screens</h3>
+<table>
+  <tbody>
+    <tr><td>Device Type</td><td>Network Video Recorder (NVR) — pure IP; no analog inputs</td></tr>
+    <tr><td>Brand</td><td>Hikvision OEM / white-label (firmware and UI are identical to Hikvision; "NR" prefix used by some distributors)</td></tr>
+    <tr class="hl"><td>Model</td><td>NR710-64</td></tr>
+    <tr class="hl"><td>Serial No.</td><td>1620221116CCRRK84597410WCVU</td></tr>
+    <tr class="hl"><td>MAC Address</td><td>24:32:AE:58:32:8D</td></tr>
+    <tr class="hl"><td>Firmware Version</td><td>V4.61.000, Build 220809 — built 2022-08-09, approx. 4 years old</td></tr>
+    <tr><td>Hardware Version</td><td>0100054C02000000</td></tr>
+    <tr><td>Channel Capacity</td><td>64 IP camera channels</td></tr>
+    <tr><td>Active Channels</td><td>~30+ (all operational at time of inspection)</td></tr>
+    <tr><td>Input Power</td><td>100V–240V~, 50/60Hz, 2A, 70W Max (confirmed from label)</td></tr>
+    <tr><td>Front LEDs (lit)</td><td>READY (blue), STATUS (blue), Tx/Rx (blue), GUARD (blue) — HDD dim/off; ALARM off</td></tr>
+    <tr class="hl"><td>Password Protection</td><td>DISABLED — "Enable Password" unchecked in System &gt; General. Must be set immediately.</td></tr>
+    <tr><td>Auto Logout</td><td>Never (default)</td></tr>
+  </tbody>
+</table>
+
+<h3>System Configuration (read from NVR screens)</h3>
+<table class="no-break">
+  <tbody>
+    <tr><td>Language / Time Zone</td><td>English; (GMT-05:00) Eastern Time; MM-DD-YYYY format</td></tr>
+    <tr><td>System Date at Inspection</td><td>06-03-2026 at 14:35:18 — accurate</td></tr>
+    <tr><td>Device Name</td><td>"Network Video Recorder" (default — rename to "Foundry Phase 3 NVR")</td></tr>
+    <tr><td>HDMI1 / VGA1 Resolution</td><td>1024×768 @ 60Hz — recommend updating to 1920×1080</td></tr>
+    <tr><td>HDMI2 / VGA2 Resolution</td><td>1024×768 @ 60Hz — recommend updating to 1920×1080</td></tr>
+    <tr><td>DST</td><td>Apr 1st Sun 2:00 → Oct last Sun 2:00, +60 min (correct for Eastern)</td></tr>
+    <tr><td>Remote Access</td><td>Not configured — no Hik-Connect, iVMS-4200, or DDNS set up</td></tr>
+    <tr><td>IoT / Business Apps</td><td>Access Control + Alarm Linkage modules available in firmware; not confirmed active</td></tr>
+  </tbody>
+</table>
+
+<h3>Camera Type — IP Turret Dome (all Phase 3 cameras)</h3>
+<table class="no-break">
+  <tbody>
+    <tr><td>Form Factor</td><td>IP turret dome, flush ceiling mount, white housing</td></tr>
+    <tr><td>Sensors</td><td>1× square IR LED illuminator (night vision) + 1× camera lens — both visible in photos</td></tr>
+    <tr><td>Connection</td><td>PoE Ethernet via CAT6 through EMT conduit to NVR / PoE switch</td></tr>
+    <tr><td>Environment</td><td>Indoor — common areas and hallways</td></tr>
+    <tr><td>Count</td><td>~30+ (confirm exact count via NVR Camera menu)</td></tr>
+    <tr><td>Condition</td><td>All units operational; installation is clean and new</td></tr>
+    <tr><td>Likely Model</td><td>Hikvision DS-2CD2343G2-I or DS-2CD2347G2-LU turret (or OEM equivalent)</td></tr>
+  </tbody>
+</table>
+
+<h3>Display, Network &amp; Power</h3>
+<table class="no-break">
+  <tbody>
+    <tr><td>Monitor</td><td>TCL Roku TV ~43–50" — HDMI; currently set to 1024×768 (update to 1080p)</td></tr>
+    <tr><td>PoE Switch</td><td>TRENDnet GreenNet series — black/green; 8+ ports; yellow CAT6 runs with printed label tags</td></tr>
+    <tr><td>Cabling</td><td>Yellow CAT6, all labeled; EMT conduit vertical wall runs; pull boxes at transitions — clean and organized</td></tr>
+    <tr><td>UPS</td><td>CyberPower — larger tower model (brand confirmed; VA rating not visible on photos)</td></tr>
+  </tbody>
+</table>
+
+<h3>Known Issues — Phase 3</h3>
+<ul class="issues">
+  <li class="crit" data-n="1"><strong>Password protection is OFF</strong> — System &gt; General &gt; check "Enable Password" → set Foundry1 immediately. Any device on the building LAN has full NVR admin access right now.</li>
+  <li class="crit" data-n="2"><strong>No remote viewing configured</strong> — Hik-Connect / iVMS-4200 / DDNS not set up. NVR is invisible outside the building LAN. Configure via Network &gt; Platform Access.</li>
+  <li data-n="3"><strong>Storage unverified</strong> — HDD LED dim at inspection. Check Maintenance &gt; HDD. With 30+ cameras, a 4TB drive fills in ~2–3 weeks. Add Seagate SkyHawk 8TB (~$130) if capacity is low.</li>
+  <li data-n="4"><strong>Firmware 4 years old</strong> — V4.61.000 Build 220809 (Aug 2022). Check Maintenance &gt; Upgrade for V4.7x+ security patches.</li>
+  <li data-n="5"><strong>Display at 1024×768</strong> — Both HDMI outputs are sub-HD. Change to 1920×1080 via System &gt; General.</li>
+  <li data-n="6"><strong>Device name is default</strong> — Rename to "Foundry Phase 3 NVR" via System &gt; General &gt; Device Name.</li>
+</ul>
+
+<hr class="heavy">
+
+<!-- ════════════════════════════════════════ CROSS-PHASE SUMMARY -->
+<div class="sec">
+  <h2>Cross-Phase Summary</h2>
+  <div class="r"></div>
+</div>
+
+<table class="sum-tbl">
+  <thead>
+    <tr><th>Item</th><th>Phase 1</th><th>Phase 2</th><th>Phase 3</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Recorder Type</td><td>Hikvision DVR (analog)</td><td>Hikvision Hybrid DVR (analog + IP slots)</td><td>NR710-64 NVR (pure IP, 64-ch)</td></tr>
+    <tr><td>Model</td><td>DS-7300 series (est.)</td><td>DS-7300 Hybrid (est.)</td><td>NR710-64 (confirmed)</td></tr>
+    <tr><td>Firmware</td><td>Unknown — locked</td><td>Unknown — check menu</td><td>V4.61.000, Build 220809</td></tr>
+    <tr><td>Camera Count</td><td>18 total / 4 live</td><td>16 total / 13 live</td><td>~64 slots / ~30+ live</td></tr>
+    <tr><td>Camera Type</td><td>Analog/HD-CVI BNC</td><td>Analog/HD-CVI BNC</td><td>PoE IP turret, CAT6</td></tr>
+    <tr><td>Monitor</td><td>TCL ~32" via VGA</td><td>TCL ~32" via HDMI</td><td>TCL ~45" via HDMI</td></tr>
+    <tr><td>UPS / Power</td><td>APC-style surge strip</td><td>CyberPower 450VA</td><td>CyberPower (larger)</td></tr>
+    <tr><td>Network Backhaul</td><td>EnGenius EnStation (ext.)</td><td>EnGenius EnStation (ext.)</td><td>GreenNet PoE switch (int.)</td></tr>
+    <tr><td>Remote Access</td><td>Not available (locked)</td><td>Possible — not confirmed</td><td>Not configured</td></tr>
+    <tr><td>Password</td><td>Foundry1 (needs SADP)</td><td>Foundry1 (accessible)</td><td>DISABLED — set now</td></tr>
+    <tr><td>Overall Condition</td><td>Poor — 14 cameras down</td><td>Fair — 3 cameras down</td><td>Good — config needed</td></tr>
+  </tbody>
+</table>
+
+<hr class="heavy">
+
+<!-- ════════════════════════════════════════ OPEN CHECKLIST -->
+<div class="sec">
+  <h2>Open Items for Incoming Technician</h2>
+  <div class="r"></div>
+</div>
+
+<p class="ck-head">Phase 1 — Priority Actions</p>
+<ul class="ck">
+  <li>Reset DVR admin password via Hikvision SADP tool (PC on same LAN) or physical reset button on unit</li>
+  <li>After login: check firmware version, HDD status, and full channel list</li>
+  <li>Walk all 14 dead BNC runs — check DVR-rear connectors first; test with a spare camera from Phase 2 desk before ordering any hardware</li>
+  <li>Switch monitor from VGA to HDMI (port present on DVR rear — zero cost)</li>
+  <li>Inspect EnGenius EnStation mount — masonry cracks flagged at mount location; flag to board</li>
+</ul>
+
+<p class="ck-head">Phase 2 — Priority Actions</p>
+<ul class="ck">
+  <li>Confirm login works: admin / Foundry1</li>
+  <li>Check firmware version via Maintenance menu and HDD status / remaining storage</li>
+  <li>Check power distribution board fuses for the 3 offline cameras</li>
+  <li>Rename channels A3, A5, A6, A7, A13, A14, A15 via DVR Channel Config menu</li>
+  <li>Verify D1–D9 IP channel slots — unused or connected but unconfigured?</li>
+  <li><strong>Address meter room cable distribution box — safety / fire hazard; requires professional remediation</strong></li>
+  <li>Verify recording timeline gap (last footage visible ~March 2026 in playback photos)</li>
+</ul>
+
+<p class="ck-head">Phase 3 — Priority Actions</p>
+<ul class="ck">
+  <li><strong>Enable password now:</strong> System &gt; General &gt; check "Enable Password" → set Foundry1 or stronger</li>
+  <li>Set up remote access: Network &gt; Platform Access &gt; enable Hik-Connect</li>
+  <li>Check HDD: Maintenance &gt; HDD — verify capacity, free space, drive health; add 8TB SkyHawk if needed</li>
+  <li>Update firmware: Maintenance &gt; Upgrade — check for V4.7x+ updates</li>
+  <li>Change both HDMI outputs to 1920×1080 via System &gt; General</li>
+  <li>Rename device to "Foundry Phase 3 NVR" via System &gt; General &gt; Device Name</li>
+  <li>Confirm exact camera count and all channel names via Camera menu</li>
+</ul>
+
+</div><!-- /body -->
+
+<!-- PRIORITY PANEL (page break before) -->
+<div class="priority">
+
+  <h2>Priority &amp; Recommendations</h2>
+  <p class="deck">All three systems run Hikvision or Hikvision-compatible firmware. The wiring is intact and fully hard-wired throughout. The path to a fully operational, remotely viewable system across all phases is almost entirely configuration — not hardware replacement. Estimated out-of-pocket cost: under $100, with one possible storage drive for Phase 3.</p>
+
+  <div class="p-grid">
+    <div>
+      <p class="p-col-head free">Immediate — No Cost</p>
+
+      <div class="p-item">
+        <div class="p-num">1</div>
+        <div class="p-body"><strong>Unlock Phase 1 DVR</strong>
+          Download Hikvision SADP (free, PC only) and run it on any laptop on the same LAN. SADP finds the unit and resets the password. Login: admin / Foundry1. Check HDD status and dead channel list before touching any cabling.
+        </div>
+      </div>
+
+      <div class="p-item">
+        <div class="p-num">2</div>
+        <div class="p-body"><strong>Set password on Phase 3 NVR</strong>
+          Password protection is currently disabled. System &gt; General &gt; check "Enable Password" → Foundry1. Any device on the building LAN has full admin access today.
+        </div>
+      </div>
+
+      <div class="p-item">
+        <div class="p-num">3</div>
+        <div class="p-body"><strong>Unified viewing — iVMS-4200 (free)</strong>
+          All three units speak Hikvision protocol. Install iVMS-4200 (free, Windows/Mac) on one PC and add all three recorders. Single dashboard — live view, playback, and export across all phases. No subscription, no cost.
+        </div>
+      </div>
+
+      <div class="p-item">
+        <div class="p-num">4</div>
+        <div class="p-body"><strong>Mobile app — Hik-Connect (free)</strong>
+          Register all three recorders on Hik-Connect (free iOS/Android app). Board members get live remote viewing and motion alerts from anywhere. No port forwarding or static IP required. Fastest path to remote access for the whole building.
+        </div>
+      </div>
+
+      <div class="p-item">
+        <div class="p-num">5</div>
+        <div class="p-body"><strong>Rename Phase 2 channels</strong>
+          Channels A3, A5–A7, A13–A15 are partially legible. Log in with Foundry1 and rename from the Channel Config menu. 10-minute task.
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <p class="p-col-head cost">Low Cost — Under $100</p>
+
+      <div class="p-item cost">
+        <div class="p-num">6</div>
+        <div class="p-body"><strong>Verify Phase 3 storage first</strong>
+          HDD LED was dim at inspection. Check Maintenance &gt; HDD before anything else. With 30+ cameras, a 4TB drive fills in ~2–3 weeks. A Seagate SkyHawk 4TB (~$70) or 8TB (~$130) drops in without any configuration. A full drive means footage is already being overwritten.
+        </div>
+      </div>
+
+      <div class="p-item cost">
+        <div class="p-num">7</div>
+        <div class="p-body"><strong>Bench-test Phase 1 dead cameras first</strong>
+          Two spare black mini dome cameras are on the Phase 2 desk, new in bags. Pull one dead BNC cable from the DVR rear and connect a spare camera directly. If the DVR shows a picture, the cable run is good and only the camera head is dead. If no picture, the problem is in the cable or the DVR channel itself. Start with the channels physically closest to the DVR room first.
+        </div>
+      </div>
+
+      <div class="arch">
+        <span class="arch-lbl">Target Viewing Architecture — All Phases</span>
+        Phase 1 DVR ──┐<br>
+        Phase 2 DVR ──┼──► Building LAN ──► iVMS-4200 on PC &nbsp;(on-site, all cameras)<br>
+        Phase 3 NVR ──┘&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└──► Hik-Connect cloud ──► Board members' phones
+      </div>
+    </div>
+  </div>
+</div><!-- /priority -->
+
+<!-- FOOTER -->
+<div class="doc-footer">
+  <span>The Lofts at The Foundry &nbsp;·&nbsp; 225 South Plank Rd, Newburgh NY 12550</span>
+  <span>Inventory: June 5, 2026 &nbsp;·&nbsp; ICOM Solutions</span>
+</div>
+
+</body>
+</html>
