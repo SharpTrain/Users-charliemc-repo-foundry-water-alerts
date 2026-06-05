@@ -62,15 +62,75 @@
 | DVR-to-monitor | VGA cable (desktop length) |
 | Network | CAT5/6 from DVR to TRENDnet switch; CAT from switch to EnGenius EnStation (PoE run to exterior) |
 
-### Camera Endpoints
+### Camera Endpoints — Summary
 
 | Item | Count | Notes |
 |---|---|---|
 | Total camera slots (DVR) | 18 | |
 | Operational / live video | 4 | Appear to be hallway / elevator cameras based on DVR preview |
 | Offline (NO VIDEO) | 14 | No signal at DVR — likely failed cameras, cut/damaged coax, or power loss at camera end |
-| Camera type | Analog / HD-CVI | Based on BNC coaxial wiring to DVR |
-| Camera power method | Likely 12VDC or PoC (Power over Coax) | No separate PoE switch observed; power likely local to each camera or via DVR |
+| Camera connection type | Analog / HD-CVI | BNC coaxial wiring to DVR |
+| Camera power method | Likely 12VDC siamese coax or PoC | No separate PoE switch observed; power likely via siamese coax or local supply at each camera |
+
+### Camera Endpoints — By Type
+
+#### Type A: Indoor Dome Camera
+| Field | Detail |
+|---|---|
+| Form factor | Small dome / eyeball |
+| Housing color | White |
+| Mount location | Interior ceiling corner (wall-ceiling junction) |
+| Environment | Indoor — common area / hallway |
+| Lens | Fixed wide-angle; appears to be ~2.8mm or 3.6mm based on housing size |
+| Observed location | Hallway or lobby common area; warm-lit wall sconce visible below camera |
+| Condition | Visually intact; operational status unknown without DVR access |
+| Typical model | Hikvision DS-2CE56D0T-IRPF or similar analog/HD-CVI mini dome |
+
+#### Type B: Outdoor Bullet Camera
+| Field | Detail |
+|---|---|
+| Form factor | Bullet / cylindrical |
+| Housing color | Black |
+| Mount location | Exterior brick wall, under soffit overhang |
+| Environment | Outdoor — building perimeter / alley / parking area |
+| Mount hardware | Black surface-mount junction box behind camera body |
+| Lens | Varifocal or fixed telephoto (elongated body); aimed toward parking/alley |
+| Observed location | Building exterior corner near parking area (vehicle visible in background) |
+| Condition | Visually intact; operational status unknown without DVR access |
+| Typical model | Hikvision DS-2CE16D0T-EXIF or similar analog/HD-TVI outdoor bullet |
+
+#### Type C: Outdoor Mini Dome / Turret Camera
+| Field | Detail |
+|---|---|
+| Form factor | Mini dome / turret |
+| Housing color | Black |
+| Mount location | Exterior brick wall, under soffit overhang |
+| Environment | Outdoor — building perimeter |
+| Lens | Short fixed lens; wider angle than Type B |
+| Observed location | Same exterior overhang zone as Type B bullet; aimed at approach/entry area |
+| Condition | Visually intact; operational status unknown without DVR access |
+| Typical model | Hikvision DS-2CE56D0T-IRMMF or similar analog/HD-CVI mini dome |
+
+#### Type D: Cylindrical Ceiling-Mounted Device (conduit-mounted)
+| Field | Detail |
+|---|---|
+| Form factor | Cylindrical metal canister, ~3" long |
+| Housing color | Silver / bare metal |
+| Mount location | Interior ceiling — mounted directly to EMT conduit run via conduit clamp |
+| Visible label | Label present on body (text not fully legible in photo) |
+| Likely function | PIR motion detector, or covert pinhole camera; mounted inline with conduit run |
+| Notes | Unconventional mount — clamped to conduit rather than ceiling box; label should be photographed up close for positive ID |
+| Condition | Visually intact; function and operational status unverified |
+
+### Conduit Infrastructure (Interior)
+
+| Item | Detail |
+|---|---|
+| Conduit type | Rigid / IMC metal EMT conduit, ~3/4" or 1" diameter |
+| Routing | Runs along interior ceilings; visible in common areas and mechanical spaces |
+| Fittings | Conduit LB body / raintight conduit bodies at junction/turn points |
+| Associated devices | Smoke/heat detector visible alongside conduit run in ceiling space |
+| Condition | Conduit appears intact; fittings show typical aging; no obvious damage visible |
 
 ### Software / Firmware
 
