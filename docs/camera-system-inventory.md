@@ -3,7 +3,9 @@
 **Building:** The Foundry at Washington Park, 225 South Plank Rd, Newburgh NY 12550  
 **Inventory date:** 2026-06-05  
 **Compiled by:** Charlie McC / ICOM Solutions  
-**Scope:** Three-phase analog CCTV + wireless backhaul system
+**Scope:** Three-phase CCTV system — analog/HD-CVI (Phase 1 & 2) + full IP/PoE (Phase 3)  
+**Prepared for:** Incoming technician handoff  
+**Total cameras across all phases:** ~64 positions (18 P1 + 16 P2 + ~30 P3)
 
 ---
 
@@ -297,10 +299,162 @@
 
 ---
 
-## Phase 3
+---
 
-*To be added after Charlie provides Phase 3 photos.*
+## PHASE 3 — Hardware & Software Inventory
+
+**Status: All cameras operational (~30+ of 64 channels configured and live)**  
+**System type: Full IP / PoE NVR — newer, clean installation**  
+**Known gaps: No remote viewing configured (no app or URL); storage capacity unverified**
+
+### NVR Unit — Confirmed from device label + on-screen System Info
+
+| Field | Detail |
+|---|---|
+| Device type | Network Video Recorder (NVR) — pure IP, no analog inputs |
+| Brand | Hikvision OEM / white-label (UI and firmware are identical to Hikvision; "NR" model prefix used by some distributors) |
+| **Model** | **NR710-64** |
+| **Serial No.** | **1620221116CCRRK84597410WCVU** |
+| **MAC Address** | **24:32:AE:58:32:8D** |
+| **Firmware Version** | **V4.61.000, Build 220809** (built 2022-08-09 — approx. 4 years old) |
+| **Hardware Version** | **0100054C02000000** |
+| Channel capacity | 64 IP camera channels (NR710-**64** suffix) |
+| Active channels | ~30+ (all operational per on-site assessment) |
+| Front indicators | ALARM (off), READY (blue, lit), STATUS (blue, lit), HDD (off/dim), Tx/Rx (blue, lit), GUARD (blue, lit) |
+| Front controls | D-pad + Enter, PTZ, PLAY, REC, SHOT, F1, F2, MENU, ESC, WIPER, LIGHT, AUX, MAINSPOT, IRIS±, FOCUS±, ZOOM±, AUTO |
+| Outputs | HDMI1/VGA1, HDMI2/VGA2 (both confirmed in System > General) |
+| Power | CyberPower UPS (larger unit; brand confirmed in photo — model unread) |
+| Input voltage | 100V–240V~, 50/60Hz, 2A, 70W Max (confirmed from label) |
+| Password protection | **DISABLED** — "Enable Password" unchecked in System > General |
+| Auto logout | Never |
+
+### System Configuration (read from NVR screens)
+
+| Setting | Value |
+|---|---|
+| Language | English |
+| Time Zone | (GMT-05:00) Eastern Time |
+| Date Format | MM-DD-YYYY |
+| System Date at inspection | 06-03-2026 (accurate, 2 days before this report) |
+| System Time at inspection | 14:35:18 |
+| Device Name | Network Video Recorder (default — not renamed) |
+| Device No. | 1 |
+| HDMI1/VGA1 Resolution | 1024×768 @ 60Hz |
+| HDMI2/VGA2 Resolution | 1024×768 @ 60Hz |
+| DST | Enabled: Apr 1st Sun 2:00 → Oct last Sun 2:00, +60 min |
+| IoT / Business Applications | Access Control (Entrance/Exit Channel Control) + Alarm (Event Linkage Management) — available in firmware, not confirmed active |
+| Remote access | **Not configured** — no Hik-Connect, iVMS-4200, or URL access set up |
+
+### Display Monitor
+
+| Field | Detail |
+|---|---|
+| Brand / Model | TCL Roku TV (~43–50"), same brand as Phase 1 & 2 |
+| Connection | HDMI (resolution shown as 1024×768 — can be increased to 1920×1080) |
+| Condition | Operational |
+
+### Camera Type — Phase 3 (IP Turret / Dome)
+
+| Field | Detail |
+|---|---|
+| Form factor | IP turret dome, flush ceiling mount |
+| Housing color | White |
+| Sensors visible | 1× square IR LED illuminator (night vision) + 1× camera lens |
+| Connection | PoE Ethernet (CAT6 via EMT conduit to NVR or PoE switch) |
+| Environment | Indoor — common areas, hallways |
+| Conduit | EMT conduit from camera ceiling mount into ceiling void; standard installation |
+| Condition | All units operational and visually clean; installation is new |
+| Likely model | Hikvision DS-2CD2343G2-I or DS-2CD2347G2-LU turret camera (or OEM equivalent) |
+| Count | ~30+ (exact count to be confirmed via NVR camera menu) |
+
+### Network Equipment
+
+| Device | Detail |
+|---|---|
+| PoE Switch | TRENDnet GreenNet series (black with green logo) — visible in photos with yellow CAT6 connections |
+| Switch ports | 8+ ports; multiple yellow CAT6 cables terminated |
+| Cable labeling | Yellow CAT6 runs have printed white label tags — labeled with zone/location identifiers |
+| Outlet | Metal weatherproof duplex outlet box mounted at switch location |
+
+### Power Infrastructure
+
+| Device | Detail |
+|---|---|
+| UPS | CyberPower — larger tower model (brand confirmed; specific VA rating not readable from photo) |
+| Location | On desk/shelf adjacent to NVR |
+
+### Cabling
+
+| Run | Detail |
+|---|---|
+| Camera runs | Yellow CAT6 — all labeled; routed through EMT conduit and along wooden backboard shelf |
+| Conduit | Galvanized EMT (1"+), vertical wall runs; pull boxes at transitions |
+| Termination | GreenNet PoE switch at shelf distribution point |
+| Condition | Clean and organized — substantially better than Phase 1 & 2 |
 
 ---
 
-*This inventory is part of The Foundry at Washington Park facilities documentation. Water monitoring system (BlueBot / Phase 1 & Phase 2) documented separately — see project README.*
+## Known Issues — Phase 3
+
+1. **Password protection is OFF** — `Enable Password` is unchecked in System > General. Any device on the local network can access the NVR without credentials. Enable a strong admin password immediately.
+2. **No remote viewing configured** — Hik-Connect / iVMS-4200 / DDNS not set up. The NVR is inaccessible from outside the local LAN. Remote access should be configured via Hik-Connect (cloud) or a static-IP/DDNS setup through the Network menu.
+3. **Storage status unverified** — HDD LED was dim/off on NVR front panel. The HDD submenu (Maintenance > HDD) should be checked for installed capacity, free space, and drive health. A 64-channel NVR with 30+ cameras recording continuously will fill storage quickly.
+4. **Firmware is ~4 years old** — V4.61.000, Build 220809 (August 2022). Current Hikvision firmware for equivalent hardware is V4.7x+. Check Maintenance > Upgrade for available updates.
+5. **Display resolution set to 1024×768** — Both HDMI outputs are at sub-HD resolution. Should be changed to 1920×1080 in System > General for a usable monitoring view.
+6. **Device name is default** — "Network Video Recorder" is the generic name. Should be renamed to "Foundry Phase 3 NVR" or similar for identification on the network.
+7. **IoT/Access Control modules visible** — The Business Application menu shows Access Control and Alarm Linkage modules available. If door/access control hardware is present in Phase 3 areas, these may need configuration.
+
+---
+
+## Cross-Phase Summary
+
+| Item | Phase 1 | Phase 2 | Phase 3 |
+|---|---|---|---|
+| Recorder type | Hikvision DVR (analog/HD-CVI) | Hikvision Hybrid DVR (analog + IP slots) | NR710-64 NVR (pure IP, 64-ch) |
+| Model | DS-7300 series (est.) | DS-7300 Hybrid series (est.) | NR710-64 (confirmed) |
+| Firmware | Unknown (DVR locked) | Unknown (check via menu) | V4.61.000, Build 220809 (confirmed) |
+| Camera count | 18 total / **4 operational** | 16 total / **13 operational** | ~64 slots / **~30+ operational** |
+| Camera type | Analog/HD-CVI BNC | Analog/HD-CVI BNC | PoE IP turret (CAT6) |
+| Camera housing | White dome (indoor), Black bullet + dome (outdoor) | Same as Phase 1 | White IP turret dome (indoor) |
+| Monitor | TCL Roku TV ~32" via VGA | TCL Roku TV ~32" via HDMI | TCL Roku TV ~43–50" via HDMI |
+| UPS / Power | APC-style surge strip | CyberPower 450VA (confirmed) | CyberPower (larger; VA unread) |
+| Network backhaul | EnGenius EnStation (exterior) | EnGenius EnStation (exterior) | GreenNet PoE switch (internal) |
+| Remote access | Not available (DVR locked) | Possible (DVR unlocked; not confirmed set up) | Not configured |
+| Password | DVR locked (needs reset) | Accessible (check password state) | **Disabled — no password set** |
+| Condition | Poor — 14 cameras down, DVR locked | Fair — 3 cameras down, usable | Good — all cameras live; software config needed |
+
+---
+
+## Open Items for Incoming Technician
+
+### Phase 1 — Priority Actions
+- [ ] Reset DVR admin password using Hikvision SADP tool (PC on same LAN) or physical reset button
+- [ ] After login: check firmware version, HDD status, channel list
+- [ ] Walk all 14 dead BNC runs — check BNC connectors at DVR rear first, then trace to camera; test with a spare camera or BNC loopback tool
+- [ ] Switch monitor connection from VGA to HDMI (port visible on DVR rear)
+- [ ] Inspect EnGenius EnStation mount — masonry cracks at mount location flagged
+
+### Phase 2 — Priority Actions
+- [ ] Confirm admin password status (DVR was accessible at inspection)
+- [ ] Check firmware version via Maintenance menu
+- [ ] Check HDD status and remaining storage
+- [ ] Check power distribution board fuses for the 3 offline cameras
+- [ ] Rename all partially legible channel names (A3, A5, A6, A7, A13, A14, A15)
+- [ ] Verify D1–D9 IP channel slots — determine if unused or connected but unconfigured
+- [ ] Address building meter room cable distribution box — this is a safety/fire hazard; needs professional remediation
+- [ ] Verify recording timeline gap (playback showed last recording ~March 2026)
+
+### Phase 3 — Priority Actions
+- [ ] **Enable password protection immediately** (System > General > check "Enable Password"; create strong admin password)
+- [ ] Set up remote access: go to Network > Platform Access > enable Hik-Connect, or configure DDNS/port forwarding
+- [ ] Check HDD: Maintenance > HDD — verify installed capacity, health, and free space; add drive if needed
+- [ ] Update firmware: Maintenance > Upgrade — check for updates to V4.7x+ for security patches
+- [ ] Change display resolution: System > General > HDMI1/VGA1 Resolution → 1920×1080
+- [ ] Rename device: System > General > Device Name → "Foundry Phase 3 NVR"
+- [ ] Get exact camera count and confirm all channel names via Camera menu
+
+---
+
+*This inventory is part of The Foundry at Washington Park facilities documentation.*  
+*Water monitoring system (BlueBot / Phase 1 & Phase 2) documented separately — see project README.*  
+*Property management: HE Development Construction Property Management (document visible in Phase 3 photos).*
