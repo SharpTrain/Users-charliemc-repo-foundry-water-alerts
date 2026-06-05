@@ -9,6 +9,54 @@
 
 ---
 
+## Priority & Recommendation Summary
+
+**Bottom line:** All three systems run Hikvision or Hikvision-compatible firmware. The wiring is intact and hard-wired throughout. The path to a fully operational, remotely viewable system across all three phases is almost entirely configuration work — not hardware replacement. Estimated out-of-pocket cost to get to full function is under $100, with one possible storage drive purchase for Phase 3.
+
+---
+
+### Immediate Actions — No Cost
+
+**1. Unlock Phase 1 DVR**
+The DVR is locked. Run the Hikvision SADP tool (free PC download) on any laptop connected to the same LAN as the Phase 1 DVR. SADP will find the unit, let you reset the password, and restore admin access. Login: `admin` / `Foundry1`. Once in, check HDD status and confirm which 14 channels are dead before touching any cable.
+
+**2. Set a password on Phase 3 NVR**
+Phase 3 (NR710-64) has password protection disabled. Go to System > General > check "Enable Password" and set `Foundry1` (or a stronger password) immediately. Any device on the building LAN currently has unrestricted access to the NVR.
+
+**3. Set up unified viewing — iVMS-4200 (free)**
+All three units — Phase 1 DVR, Phase 2 hybrid DVR, and Phase 3 NVR — speak the Hikvision protocol. Install **iVMS-4200** (free, Windows/Mac, from Hikvision) on one PC and add all three recorders. This gives a single dashboard showing all cameras across all three phases simultaneously, with playback, event search, and export. No subscription, no cost.
+
+**4. Set up mobile app — Hik-Connect (free)**
+Register all three recorders on **Hik-Connect** (free Hikvision cloud app, iOS and Android). This gives board members live remote viewing and motion alerts from their phones from anywhere — no port forwarding, no static IP required. One account can manage all three units. This is the fastest path to remote access.
+
+**5. Fix Phase 2 channel names**
+Channels A3, A5–A7, A13–A15 show partial or default names in the DVR sidebar. Log in with `Foundry1` and rename them from the Channel Config menu while doing the walk-through. Takes 10 minutes.
+
+---
+
+### Low-Cost Actions — Under $100
+
+**6. Check and expand Phase 3 storage first**
+The Phase 3 NVR HDD LED was dim at inspection. Go to Maintenance > HDD to check installed capacity and free space. With 30+ cameras, a single 4TB drive holds roughly 2–3 weeks of footage at standard quality. If the drive is nearly full or undersized, a **Seagate SkyHawk 4TB or 8TB surveillance HDD** runs $70–$130 and drops in without any configuration. Do this before worrying about the dead cameras — a full drive means Phase 3 may already be overwriting footage.
+
+**7. Diagnose Phase 1 dead cameras — don't replace until confirmed**
+Before ordering anything, do a quick bench test: unplug one of the dead BNC cables from the DVR rear and connect a known-good spare camera directly. If the DVR shows a picture, the cable run is fine and only the camera head is dead. If no picture, the problem is in the cable or the DVR channel. Start with channels closest to the DVR room — those are the easiest to rule out. The two spare black mini dome cameras on the Phase 2 desk can be used for this test.
+
+---
+
+### Unified Viewing Architecture (Target State)
+
+```
+Phase 1 DVR ──┐
+Phase 2 DVR ──┤──► Building LAN ──► iVMS-4200 on PC (on-site, all cameras)
+Phase 3 NVR ──┘         │
+                         └──► Hik-Connect cloud ──► Board members' phones (remote)
+```
+
+All three units are already on the building LAN (or bridged via EnGenius). No new hardware is needed to achieve this — only configuration on each recorder's Network > Platform Access menu.
+
+---
+
 ## PHASE 1 — Hardware & Software Inventory
 
 **Status: 4 of 18 cameras operational (14 offline / NO VIDEO)**
@@ -26,7 +74,8 @@
 | Front I/O | 2× USB-A ports, optical/DVD disc slot |
 | Rear I/O | 16–18× BNC camera inputs, audio RCA (in/out), HDMI out, VGA out, RJ45 network, alarm terminal blocks (green screw terminals), RS-485 |
 | Power | Standard IEC C13, connected via UPS/surge strip |
-| Condition | Powered on; POWER + READY LEDs lit; DVR is locked (admin login required to unlock) |
+| **Admin Password** | **Foundry1** |
+| Condition | Powered on; POWER + READY LEDs lit; DVR is locked — use SADP tool or physical reset to restore access, then log in with password above |
 
 ### Display Monitor
 
@@ -180,7 +229,8 @@
 | Front I/O | 2× USB-A ports, optical/DVD disc slot |
 | Rear I/O | 16× BNC analog inputs (8–9 in use/visible in photo), HDMI, VGA, RJ45 network, audio RCA, RS-485, alarm terminals |
 | Power | CyberPower 450VA UPS (confirmed in photo — black desktop UPS) |
-| Condition | Powered on and operational; live camera feed showing on monitor (no login lock observed) |
+| **Admin Password** | **Foundry1** |
+| Condition | Powered on and operational; live camera feed showing on monitor |
 
 ### Named Camera Channel List (read from monitor sidebar, Photo 3)
 
