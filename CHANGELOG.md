@@ -7,12 +7,22 @@ Phase 1 resident email list loaded into RESIDENTS_EMAIL_CSV GitHub Secret.
 - 29 Phase 1 resident email addresses added (units 101J–306J)
 - Charlie MC removed from Phase 1 slot (already covered as board member via always_notify)
 - Phase 2 recipient list unchanged (40 entries)
-- 7 Phase 1 units have no email on file — to be added when available:
-  102J (Clifton Kearney), 108J (Wendy Schrijver), 110J (Kathy Lawrence),
-  205J (Rachel Devito), 211J (vacant/unknown), 301J (Deadrianne Bilups),
-  306J (Tanisha Johnson)
+- 7 named residents had no email on file, but 6 of those units already had
+  coverage via a co-resident at the same unit: 102J (Terri Kearney),
+  108J (Andrew Schrijver), 110J (Carol Lawrence), 205J (Rick Lauro),
+  301J (Desiree LeGrand), 306J (Terron Johnson). Only 211J remains with
+  no resident name or email on file (status unknown/vacant).
 
 No code changes. Alert rules, thresholds, timing, and digest schedule unchanged.
+
+## 2026-06-15 — Verified Phase 1/2 roster integrity
+
+- Confirmed all 69 rows in RESIDENTS_EMAIL_CSV (29 Phase 1, 40 Phase 2):
+  valid email format, no duplicates
+- Confirmed daily digest already sends to board (always_notify) + every
+  resident across both phases (load_email_list returns a flat list,
+  not phase-filtered)
+- 211J remains the only unit with zero email coverage
 
 ---
 
