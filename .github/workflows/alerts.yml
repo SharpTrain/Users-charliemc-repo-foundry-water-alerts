@@ -2,8 +2,11 @@ name: Water Usage Alerts
 
 on:
   schedule:
-    # Morning digest: 6 AM Eastern (10:00 UTC in summer EDT)
-    - cron: "0 10 * * *"
+    # Morning digest: 6:02 AM Eastern (10:02 UTC in summer EDT)
+    # NOTE: must NOT be at :00/:15/:30/:45 — those match the spike cron
+    # and GitHub collapses both into one run using the */15 schedule string,
+    # causing the daily step to be silently skipped.
+    - cron: "2 10 * * *"
     # Spike check: every 15 minutes
     - cron: "*/15 * * * *"
   # Manual trigger from GitHub Actions tab
@@ -94,9 +97,9 @@ jobs:
       - name: Write resident SMS list
         run: echo "${{ secrets.RESIDENTS_SMS_CSV }}" > residents_sms.csv
 
-      - name: Run daily digest (6 AM Eastern)
+      - name: Run daily digest (6:02 AM Eastern)
         if: >
-          (github.event_name == 'schedule' && github.event.schedule == '0 10 * * *') ||
+          (github.event_name == 'schedule' && github.event.schedule == '2 10 * * *') ||
           (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'daily')
         run: python main.py --mode daily
 
