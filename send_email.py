@@ -235,8 +235,43 @@ def send_email(to_list, subject, html_body, config):
         logger.warning(f"Failed to deliver to {len(failed)} recipient(s): {failed}")
 
 
+def send_email_bcc(to_list, bcc_list, subject, html_body, config):
+    """Send ONE email: board in To:, residents in Bcc:.
+    Costs 1 Gmail send regardless of recipient count — eliminates daily limit risk.
+    Content is identical for everyone; BCC hides resident addresses from each other.
+    """
+    sender = config["email"]["sender"]
+    password = config["email"]["app_password"]
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = f"{config['property']['name']} Water Alerts <{sender}>"
+    msg["To"] = ", ".join(to_list)
+    if bcc_list:
+        msg["Bcc"] = ", ".join(bcc_list)
+    msg.attach(MIMEText(html_body, "html"))
+
+    all_recipients = list(to_list) + list(bcc_list or [])
+
+    try:
+        server = smtplib.SMTP(config["email"]["smtp_server"], config["email"]["smtp_port"])
+        server.starttls()
+        server.login(sender, password)
+        server.sendmail(sender, all_recipients, msg.as_string())
+        server.quit()
+        logger.info(
+            f"Batch email sent — {len(to_list)} To, {len(bcc_list or [])} Bcc "
+            f"({len(all_recipients)} total, 1 Gmail credit): {subject}"
+        )
+    except Exception as e:
+        logger.error(f"Batch email failed: {e}")
+        raise
+
+
 def send_daily_digest(phase_data, baselines, residents, config):
-    """Send morning digest: always_notify first (in order), then residents."""
+    """Send morning digest as ONE email: board in To:, all residents in Bcc:.
+    Uses 1 Gmail send instead of 69 — eliminates daily sending limit risk.
+    """
     tz = pytz.timezone(config["property"]["timezone"])
     date_str = datetime.now(tz).strftime("%B %d, %Y")
     subject = f"[Water Report] Daily Usage Summary — {date_str}"
@@ -246,10 +281,7 @@ def send_daily_digest(phase_data, baselines, residents, config):
     board_set = set(board)
     resident_only = [e for e in residents if e not in board_set]
 
-    # Board first — guaranteed delivery before any rate-limit risk.
-    send_email(board, subject, html, config)
-    if resident_only:
-        send_email(resident_only, subject, html, config)
+    send_email_bcc(board, resident_only, subject, html, config)
 
 
 def send_spike_alert(spikes, phase_recipients, config):
@@ -280,13 +312,11 @@ def send_spike_alert(spikes, phase_recipients, config):
         if e not in board_set
     ]
 
-    send_email(board, subject, html, config)
-    if resident_only:
-        send_email(resident_only, subject, html, config)
+    send_email_bcc(board, resident_only, subject, html, config)
 
 
 def send_today_digest(phase_data, recipients, config):
-    """Send running-total digest: always_notify first, then residents."""
+    """Send running-total digest as ONE email: board in To:, residents in Bcc:."""
     tz = pytz.timezone(config["property"]["timezone"])
     date_str = datetime.now(tz).strftime("%B %d, %Y")
     subject = f"[Water Report] Today's Running Total — {date_str}"
@@ -296,6 +326,4 @@ def send_today_digest(phase_data, recipients, config):
     board_set = set(board)
     resident_only = [e for e in recipients if e not in board_set]
 
-    send_email(board, subject, html, config)
-    if resident_only:
-        send_email(resident_only, subject, html, config)
+    send_email_bcc(board, resident_only, subject, html, config)
