@@ -1,20 +1,20 @@
-name: Water Spike Alerts
+name: Daily Water Digest
 
 on:
   schedule:
-    # Spike check: every 15 minutes around the clock
-    # Daily digest is in daily.yml — kept separate to prevent GitHub
-    # from collapsing two schedules into one run.
-    - cron: "*/15 * * * *"
+    # Morning digest: 6:02 AM Eastern (10:02 UTC summer, 11:02 UTC winter)
+    # Kept in its own workflow file so GitHub never collapses it with the
+    # 15-minute spike-check workflow — the root cause of missed morning digests.
+    - cron: "2 10 * * *"
   workflow_dispatch:
     inputs:
       mode:
-        description: "Mode: spike or test"
+        description: "Mode: daily or today"
         required: true
-        default: "spike"
+        default: "daily"
 
 jobs:
-  run-alerts:
+  daily-digest:
     runs-on: ubuntu-latest
 
     steps:
@@ -28,18 +28,6 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
-
-      - name: Set today's date (Eastern)
-        id: date
-        run: echo "today=$(TZ=America/New_York date +%Y-%m-%d)" >> $GITHUB_OUTPUT
-
-      - name: Restore alert state
-        uses: actions/cache@v4
-        with:
-          path: alert_state.json
-          key: alert-state-${{ steps.date.outputs.today }}-${{ github.run_number }}
-          restore-keys: |
-            alert-state-${{ steps.date.outputs.today }}-
 
       - name: Write config from secrets
         run: |
@@ -93,12 +81,12 @@ jobs:
       - name: Write resident SMS list
         run: echo "${{ secrets.RESIDENTS_SMS_CSV }}" > residents_sms.csv
 
-      - name: Run spike check
+      - name: Run morning digest
         if: >
           github.event_name == 'schedule' ||
-          (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'spike')
-        run: python main.py --mode spike
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'daily')
+        run: python main.py --mode daily
 
-      - name: Run test
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'test'
-        run: python main.py --mode test
+      - name: Run today's running total
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'today'
+        run: python main.py --mode today
