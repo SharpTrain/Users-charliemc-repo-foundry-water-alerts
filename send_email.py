@@ -269,11 +269,10 @@ def send_email_bcc(to_list, bcc_list, subject, html_body, config):
 
 
 def send_daily_digest(phase_data, baselines, residents, config):
-    """Send morning digest.
-    Board (always_notify): individual sends — custom domain mail servers
-    filter BCC batch emails from Gmail as bulk/spam.
-    Residents: single BCC batch (1 Gmail credit for 60+ addresses).
-    Total: 8 individual + 1 BCC = 9 Gmail sends per digest.
+    """Send morning digest as individual emails to everyone.
+    Board first, then residents. Individual sends land in Primary inbox
+    for Gmail, AOL, and custom domains. 69 sends/day is well within
+    Gmail's 500/day limit even with occasional spike alerts.
     """
     tz = pytz.timezone(config["property"]["timezone"])
     date_str = datetime.now(tz).strftime("%B %d, %Y")
@@ -284,12 +283,10 @@ def send_daily_digest(phase_data, baselines, residents, config):
     board_set = set(board)
     resident_only = [e for e in residents if e not in board_set]
 
-    # Individual send to each board member — bypasses spam filtering on custom domains
+    # Individual send to each recipient — best deliverability for all email providers
     send_email(board, subject, html, config)
-    # Single BCC batch for residents — still only 1 Gmail credit for 60+ addresses
     if resident_only:
-        sender = config["email"]["sender"]
-        send_email_bcc([sender], resident_only, subject, html, config)
+        send_email(resident_only, subject, html, config)
 
 
 def send_spike_alert(spikes, phase_recipients, config):
@@ -320,16 +317,13 @@ def send_spike_alert(spikes, phase_recipients, config):
         if e not in board_set
     ]
 
-    # Individual send to each board member — bypasses spam filtering on custom domains
     send_email(board, subject, html, config)
-    # Single BCC batch for affected-phase residents
     if resident_only:
-        sender = config["email"]["sender"]
-        send_email_bcc([sender], resident_only, subject, html, config)
+        send_email(resident_only, subject, html, config)
 
 
 def send_today_digest(phase_data, recipients, config):
-    """Send running-total digest. Board individual, residents BCC batch."""
+    """Send running-total digest as individual emails to all recipients."""
     tz = pytz.timezone(config["property"]["timezone"])
     date_str = datetime.now(tz).strftime("%B %d, %Y")
     subject = f"[Water Report] Today's Running Total — {date_str}"
@@ -341,5 +335,4 @@ def send_today_digest(phase_data, recipients, config):
 
     send_email(board, subject, html, config)
     if resident_only:
-        sender = config["email"]["sender"]
-        send_email_bcc([sender], resident_only, subject, html, config)
+        send_email(resident_only, subject, html, config)
