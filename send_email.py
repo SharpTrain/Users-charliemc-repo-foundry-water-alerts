@@ -1,16 +1,16 @@
 """
 send_email.py
-Sends daily digest and spike alert emails via Gmail SMTP.
+Sends daily digest and spike alert emails via the SendGrid API.
 """
 
-import smtplib
 import logging
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from datetime import datetime
 import pytz
+import requests
 
 logger = logging.getLogger(__name__)
+
+SENDGRID_URL = "https://api.sendgrid.com/v3/mail/send"
 
 
 def _build_daily_digest_html(phase_data, baselines, config):
@@ -188,92 +188,47 @@ def _build_today_summary_html(phase_data, config):
 
 
 def send_email(to_list, subject, html_body, config):
-    """Send individual HTML emails. Logs failures per-recipient but does not raise."""
-    sender = config["email"]["sender"]
-    password = config["email"]["app_password"]
-    failed = []
+    """Send one email per recipient via a single SendGrid API call.
 
-    try:
-        server = smtplib.SMTP(config["email"]["smtp_server"], config["email"]["smtp_port"])
-        server.starttls()
-        server.login(sender, password)
-    except Exception as e:
-        logger.error(f"SMTP connection failed: {e}")
-        raise
-
-    for recipient in to_list:
-        try:
-            msg = MIMEMultipart("alternative")
-            msg["Subject"] = subject
-            msg["From"] = f"{config['property']['name']} Water Alerts <{sender}>"
-            msg["To"] = recipient
-            msg.attach(MIMEText(html_body, "html"))
-            server.sendmail(sender, recipient, msg.as_string())
-            logger.info(f"Email sent to {recipient}: {subject}")
-        except smtplib.SMTPException as exc:
-            logger.error(f"Failed to send to {recipient}: {exc}")
-            failed.append(recipient)
-            # Attempt to recover the SMTP session for the next recipient.
-            try:
-                server.quit()
-            except Exception:
-                pass
-            try:
-                server = smtplib.SMTP(config["email"]["smtp_server"], config["email"]["smtp_port"])
-                server.starttls()
-                server.login(sender, password)
-            except Exception as reconnect_err:
-                logger.error(f"SMTP reconnect failed, stopping sends: {reconnect_err}")
-                break
-
-    try:
-        server.quit()
-    except Exception:
-        pass
-
-    if failed:
-        logger.warning(f"Failed to deliver to {len(failed)} recipient(s): {failed}")
-
-
-def send_email_bcc(to_list, bcc_list, subject, html_body, config):
-    """Send ONE email: board in To:, residents in Bcc:.
-    Costs 1 Gmail send regardless of recipient count — eliminates daily limit risk.
-    Content is identical for everyone; BCC hides resident addresses from each other.
+    Each recipient is its own "personalization" — SendGrid delivers each
+    as a distinct message (no other recipient's address is exposed), but
+    the whole batch goes out as one API request instead of one SMTP
+    connection per recipient. This avoids the per-connection burst-rate
+    throttling Gmail SMTP applied to personal accounts after ~10 sends.
     """
+    if not to_list:
+        return
+
     sender = config["email"]["sender"]
-    password = config["email"]["app_password"]
+    api_key = config["email"]["sendgrid_api_key"]
+    prop_name = config["property"]["name"]
 
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = f"{config['property']['name']} Water Alerts <{sender}>"
-    msg["To"] = ", ".join(to_list)
-    if bcc_list:
-        msg["Bcc"] = ", ".join(bcc_list)
-    msg.attach(MIMEText(html_body, "html"))
-
-    all_recipients = list(to_list) + list(bcc_list or [])
+    payload = {
+        "personalizations": [{"to": [{"email": recipient}]} for recipient in to_list],
+        "from": {"email": sender, "name": f"{prop_name} Water Alerts"},
+        "subject": subject,
+        "content": [{"type": "text/html", "value": html_body}],
+    }
 
     try:
-        server = smtplib.SMTP(config["email"]["smtp_server"], config["email"]["smtp_port"])
-        server.starttls()
-        server.login(sender, password)
-        server.sendmail(sender, all_recipients, msg.as_string())
-        server.quit()
-        logger.info(
-            f"Batch email sent — {len(to_list)} To, {len(bcc_list or [])} Bcc "
-            f"({len(all_recipients)} total, 1 Gmail credit): {subject}"
+        resp = requests.post(
+            SENDGRID_URL,
+            headers={"Authorization": f"Bearer {api_key}"},
+            json=payload,
+            timeout=30,
         )
-    except Exception as e:
-        logger.error(f"Batch email failed: {e}")
+    except requests.RequestException as exc:
+        logger.error(f"SendGrid request failed: {exc}")
         raise
+
+    if resp.status_code == 202:
+        logger.info(f"SendGrid accepted {len(to_list)} email(s): {subject}")
+    else:
+        logger.error(f"SendGrid send failed ({resp.status_code}): {resp.text[:500]}")
 
 
 def send_daily_digest(phase_data, baselines, residents, config):
-    """Send morning digest as individual emails to everyone.
-    Board first, then residents. Individual sends land in Primary inbox
-    for Gmail, AOL, and custom domains. 69 sends/day is well within
-    Gmail's 500/day limit even with occasional spike alerts.
-    """
+    """Send morning digest to board, then residents, via SendGrid."""
     tz = pytz.timezone(config["property"]["timezone"])
     date_str = datetime.now(tz).strftime("%B %d, %Y")
     subject = f"[Water Report] Daily Usage Summary — {date_str}"
@@ -283,7 +238,6 @@ def send_daily_digest(phase_data, baselines, residents, config):
     board_set = set(board)
     resident_only = [e for e in residents if e not in board_set]
 
-    # Individual send to each recipient — best deliverability for all email providers
     send_email(board, subject, html, config)
     if resident_only:
         send_email(resident_only, subject, html, config)
@@ -323,7 +277,7 @@ def send_spike_alert(spikes, phase_recipients, config):
 
 
 def send_today_digest(phase_data, recipients, config):
-    """Send running-total digest as individual emails to all recipients."""
+    """Send running-total digest to board, then residents, via SendGrid."""
     tz = pytz.timezone(config["property"]["timezone"])
     date_str = datetime.now(tz).strftime("%B %d, %Y")
     subject = f"[Water Report] Today's Running Total — {date_str}"
