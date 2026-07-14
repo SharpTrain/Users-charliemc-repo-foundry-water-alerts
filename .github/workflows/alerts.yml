@@ -67,9 +67,7 @@ jobs:
 
           email:
             sender: "foundrywater@gmail.com"
-            app_password: "${{ secrets.GMAIL_APP_PASSWORD }}"
-            smtp_server: "smtp.gmail.com"
-            smtp_port: 587
+            sendgrid_api_key: "${{ secrets.SENDGRID_API_KEY }}"
             always_notify:
               - "foundrynewburgh@gmail.com"
               - "foundrytreasurer@gmail.com"
