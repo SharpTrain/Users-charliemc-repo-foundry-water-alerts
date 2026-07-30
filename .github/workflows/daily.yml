@@ -65,6 +65,7 @@ jobs:
               - "zap6237@aol.com"
               - "charlie@source-savvy.com"
               - "lhoye@mcgrathny.com"
+              - "hvanhousen@ahcllc.net"
 
           sms:
             account_sid: "${{ secrets.TWILIO_ACCOUNT_SID }}"
