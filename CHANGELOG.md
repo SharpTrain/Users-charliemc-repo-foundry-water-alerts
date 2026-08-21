@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-08-21 — SendGrid Essentials upgrade: domain authentication in progress
+
+No code changes. Continuing the SendGrid plan upgrade (see issue #7) to fix the resident email outage that's been ongoing since 2026-07-20.
+
+- Domain authentication started for `loftsatfoundry.com` (the Foundry's own property site) via SendGrid's manual DNS setup flow, run through the unified Twilio Console (`1console.twilio.com`) rather than the classic `app.sendgrid.com` dashboard
+- 4 DNS records generated, pending install by the site's registrar admin:
+  - CNAME `em8885` → `u71650504.wl005.sendgrid.net`
+  - CNAME `s1._domainkey` → `s1.domainkey.u71650504.wl005.sendgrid.net`
+  - CNAME `s2._domainkey` → `s2.domainkey.u71650504.wl005.sendgrid.net`
+  - TXT `_dmarc` → `v=DMARC1; p=none;`
+- Records sent to the site admin (GoDaddy-hosted domain) with step-by-step, non-technical setup instructions; awaiting confirmation they've been added and propagated
+- Next: verify DNS status in SendGrid, then confirm the Essentials plan (50,000 emails/month, ~$19.95/mo) using the payment method already on file
+- Resident email delivery remains broken (`403 exceeded messaging limits`) until this completes
+
+This is a status log only — the outage is not yet resolved.
+
 ## 2026-07-19 — Phase 3 residents added to email alerts
 
 Phase 3 resident email list merged into RESIDENTS_EMAIL_CSV GitHub Secret, sourced from McGrath's AppFolio tenant export (2026-07-16).
