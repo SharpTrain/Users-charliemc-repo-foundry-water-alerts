@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-09 — SendGrid Essentials upgrade complete, issue #7 resolved
+
+No code or GitHub Secrets changes. Closes out the resident email outage that began 2026-07-20.
+
+- SendGrid account upgraded to **Essentials (50,000 emails/mo, ~$19.95/mo)** using McGrath Management's Amex on file
+- The blocker was SendGrid's mandatory domain-authentication gate, which stalled for weeks on `loftsatfoundry.com` due to an unrelated GoDaddy account issue — the DNS records were added correctly but to a disconnected zone that was never actually delegated to the domain (confirmed via WHOIS + direct nameserver queries)
+- Rather than keep chasing that GoDaddy account mystery, registered a fresh, dedicated domain — **`foundrywater.org`** (Namecheap) — purely to satisfy SendGrid's DNS check. It authenticated successfully on the first attempt (clean single DNS zone, no legacy conflicts). This domain is never shown to residents; the sender stays `foundrywater@gmail.com`, unchanged
+- Verified via manual `daily.yml` dispatch (run `34398880677`, 2026-09-09 20:05 UTC): SendGrid accepted all 9 board emails and all 142 resident emails, no 403 — first fully clean send since the outage began
+- `loftsatfoundry.com`'s DNS zone mismatch remains unresolved and unassigned — no longer blocking, kept as a documented loose end in case it matters for the site beyond email
+- Existing `SENDGRID_API_KEY` secret continued to work post-upgrade, no rotation needed
+
 ## 2026-08-21 — SendGrid Essentials upgrade: domain authentication in progress
 
 No code changes. Continuing the SendGrid plan upgrade (see issue #7) to fix the resident email outage that's been ongoing since 2026-07-20.
